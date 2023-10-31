@@ -226,7 +226,7 @@ public class FieldService {
         try{
             List<MeasuredData> measuredDataList = new ArrayList<>();
             for (i = 3; i < weatherData.size(); i++) {
-                MeasuredData measuredData = new MeasuredData();
+                MeasuredData measuredData = new MeasuredData(name);
                 measuredData.setTime(weatherData.get(i).get(0).toString());
                 measuredData.setRadiation(Float.parseFloat(weatherData.get(i).get(2).toString()));
                 measuredData.setRainFall(Double.parseDouble(weatherData.get(i).get(3).toString()));
@@ -363,5 +363,28 @@ public class FieldService {
                 }
             }
         });
+    }
+
+    // oki
+    public String insertMyField(String input) {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference ref = database.getReference("user");
+        JSONObject jsonData = new JSONObject(input);
+        String nameField = jsonData.optString("fieldName");
+        FieldDTO fieldDTO= new FieldDTO(nameField);
+        final String[] result = {""};
+        ref.child(nameField).setValue(fieldDTO, new DatabaseReference.CompletionListener() {
+            @Override
+            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                if (databaseError != null) {
+                    // Xử lý lỗi nếu có
+                    result[0] = "Data could not be saved. " + databaseError.getMessage();
+                } else {
+                    // Ghi dữ liệu thành công
+                    result[0] = "Data saved successfully.";
+                }
+            }
+        });
+        return result[0];
     }
 }

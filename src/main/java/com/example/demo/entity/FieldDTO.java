@@ -1,5 +1,8 @@
 package com.example.demo.entity;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 
@@ -13,7 +16,7 @@ public class FieldDTO {
     List<Double> yields;
     String checkYieldDate;
     CustomizedParameters customizedParameters;
-    MeasuredData measuredData;
+    String measuredData;
     String startIrrigation;
 
     String endIrrigation;
@@ -103,11 +106,11 @@ public class FieldDTO {
         this.customizedParameters = customizedParameters;
     }
 
-    public MeasuredData getMeasuredData() {
+    public String getMeasuredData() {
         return measuredData;
     }
 
-    public void setMeasuredData(MeasuredData measuredData) {
+    public void setMeasuredData(String measuredData) {
         this.measuredData = measuredData;
     }
 
@@ -147,7 +150,7 @@ public class FieldDTO {
             List<Double> yields,
             String checkYieldDate,
             CustomizedParameters customizedParameters,
-            MeasuredData measuredData,
+            String measuredData,
             String startIrrigation,
             String endIrrigation) {
         this.fieldName = fieldName;
@@ -163,12 +166,13 @@ public class FieldDTO {
         this.endIrrigation = endIrrigation;
     }
     public FieldDTO(String name) {
-        this.fieldName = name;
-        this.startTime = String.valueOf(new Date(2023,10,20));
+        LocalDateTime currentDateTime = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+        this.startTime = currentDateTime.format(formatter);
         this.dAP = 0;
         this.irrigationCheck = false;
         this.amountOfIrrigation = 0;
-        this.measuredData = new MeasuredData(name);
+        this.measuredData = "";
         this.checkYieldDate = "";
         this.customizedParameters = new CustomizedParameters(name);
         this.startIrrigation = "";
@@ -180,7 +184,7 @@ public class FieldDTO {
         this.dAP = fieldDTO.dAP;
         this.irrigationCheck = fieldDTO.irrigationCheck;
         this.amountOfIrrigation = fieldDTO.amountOfIrrigation;
-        this.measuredData = new MeasuredData(fieldDTO.measuredData);
+        this.measuredData = "";
         this.checkYieldDate = "";
         this.customizedParameters = new CustomizedParameters(fieldDTO.customizedParameters);
         this.startIrrigation = "";

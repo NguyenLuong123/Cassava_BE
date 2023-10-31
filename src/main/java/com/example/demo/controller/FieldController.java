@@ -24,8 +24,8 @@ public class FieldController {
 //    }
 
     @PostMapping("/insertField")
-    public String insertField(@RequestBody FieldDTO field1) throws ExecutionException, InterruptedException {
-        return fieldService.insertField(field1);
+    public String insertField(@RequestBody String field1) throws ExecutionException, InterruptedException {
+        return fieldService.insertMyField(field1);
     }
 
     @PostMapping("/getListField")

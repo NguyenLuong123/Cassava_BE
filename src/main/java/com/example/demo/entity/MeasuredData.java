@@ -2,10 +2,6 @@ package com.example.demo.entity;
 
 public class MeasuredData {
     double rainFall;
-
-    public MeasuredData() {
-    }
-
     double relativeHumidity;
     double temperature;
     double windSpeed;
@@ -70,6 +66,8 @@ public class MeasuredData {
 
     public void setRadiation(float radiation) {
         this.radiation = radiation;
+    }
+    public MeasuredData(){
     }
 
 
