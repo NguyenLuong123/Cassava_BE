@@ -24,7 +24,7 @@ public class FieldController {
 //    }
 
     @PostMapping("/insertField")
-    public String insertField(@RequestBody String field1) throws ExecutionException, InterruptedException {
+    public String insertField(@RequestBody String field1) {
         return fieldService.insertMyField(field1);
     }
 
@@ -36,7 +36,7 @@ public class FieldController {
     @PostMapping("/updateWeatherData")
     public void updateWeatherData() {
         try {
-            fieldService.updateWeatherData("FieldTest");
+            fieldService.updateWeatherData("Field1");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -68,6 +68,15 @@ public class FieldController {
     @PostMapping("/deleteField")
     public void deleteField(@RequestBody String fieldName) {
         fieldService.deleteField(fieldName);
+    }
+    @PostMapping("/updateCustomizedParameters")
+    public String updateCustomizedParameters(@RequestBody FieldDTO input) {
+        return fieldService.updateCustomizedParameters(input);
+    }
+
+    @PostMapping("/setIrrigation")
+    public String setIrrigation(@RequestBody String input) {
+        return fieldService.setIrrigation(input);
     }
 
 }

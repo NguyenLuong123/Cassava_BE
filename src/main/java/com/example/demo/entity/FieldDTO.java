@@ -15,22 +15,22 @@ public class FieldDTO {
 
     List<Double> yields;
     String checkYieldDate;
-    CustomizedParameters customizedParameters;
-    String measuredData;
+    CustomizedParameters customized_parameters;
+    String measured_data;
     String startIrrigation;
 
     String endIrrigation;
     double _autoIrrigateTime = -1;
-    IrrigationInformation irrigationInformation;
+    IrrigationInformation irrigation_information;
     HistoryIrrigation historyIrrigation;
 
 
     public IrrigationInformation getIrrigationInformation() {
-        return irrigationInformation;
+        return irrigation_information;
     }
 
-    public void setIrrigationInformation(IrrigationInformation irrigationInformation) {
-        this.irrigationInformation = irrigationInformation;
+    public void setIrrigationInformation(IrrigationInformation irrigation_information) {
+        this.irrigation_information = irrigation_information;
     }
 
     public HistoryIrrigation getHistoryIrrigation() {
@@ -99,19 +99,19 @@ public class FieldDTO {
     }
 
     public CustomizedParameters getCustomizedParameters() {
-        return customizedParameters;
+        return customized_parameters;
     }
 
-    public void setCustomizedParameters(CustomizedParameters customizedParameters) {
-        this.customizedParameters = customizedParameters;
+    public void setCustomizedParameters(CustomizedParameters customized_parameters) {
+        this.customized_parameters = customized_parameters;
     }
 
     public String getMeasuredData() {
-        return measuredData;
+        return measured_data;
     }
 
-    public void setMeasuredData(String measuredData) {
-        this.measuredData = measuredData;
+    public void setMeasuredData(String measured_data) {
+        this.measured_data = measured_data;
     }
 
     public String getStartIrrigation() {
@@ -149,8 +149,8 @@ public class FieldDTO {
             double amountOfIrrigation,
             List<Double> yields,
             String checkYieldDate,
-            CustomizedParameters customizedParameters,
-            String measuredData,
+            CustomizedParameters customized_parameters,
+            String measured_data,
             String startIrrigation,
             String endIrrigation) {
         this.fieldName = fieldName;
@@ -160,8 +160,8 @@ public class FieldDTO {
         this.amountOfIrrigation = amountOfIrrigation;
         this.yields = yields;
         this.checkYieldDate = checkYieldDate;
-        this.customizedParameters = customizedParameters;
-        this.measuredData = measuredData;
+        this.customized_parameters = customized_parameters;
+        this.measured_data = measured_data;
         this.startIrrigation = startIrrigation;
         this.endIrrigation = endIrrigation;
     }
@@ -172,9 +172,9 @@ public class FieldDTO {
         this.dAP = 0;
         this.irrigationCheck = false;
         this.amountOfIrrigation = 0;
-        this.measuredData = "";
+        this.measured_data = "";
         this.checkYieldDate = "";
-        this.customizedParameters = new CustomizedParameters(name);
+        this.customized_parameters = new CustomizedParameters(name);
         this.startIrrigation = "";
         this.endIrrigation = "";
     }
@@ -184,9 +184,9 @@ public class FieldDTO {
         this.dAP = fieldDTO.dAP;
         this.irrigationCheck = fieldDTO.irrigationCheck;
         this.amountOfIrrigation = fieldDTO.amountOfIrrigation;
-        this.measuredData = "";
+        this.measured_data = "";
         this.checkYieldDate = "";
-        this.customizedParameters = new CustomizedParameters(fieldDTO.customizedParameters);
+        this.customized_parameters = new CustomizedParameters(fieldDTO.customized_parameters);
         this.startIrrigation = "";
         this.endIrrigation = "";
     }

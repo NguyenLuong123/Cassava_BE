@@ -19,10 +19,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Future;
 
 @Service
@@ -147,7 +151,7 @@ public class FieldService {
 
     public static CompletableFuture<List<MeasuredData>> getWeatherData(String input) {
         CompletableFuture<List<MeasuredData>> future = new CompletableFuture<>();
-        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/measuredData");
+        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/measured_data");
         dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -248,7 +252,7 @@ public class FieldService {
                     measuredData.setTime(datePart + " " + timePart);
                     DatabaseReference ref = database.getReference("user");
 
-                    ref.child(name + "/measuredData/" + datePart + "/" + timePart).setValueAsync(measuredData);
+                    ref.child(name + "/measured_data/" + datePart + "/" + timePart).setValueAsync(measuredData);
                     if (i == 1) {
                         ref.child(name + "/startTime").setValueAsync(measuredData.getTime());
                     }
@@ -387,4 +391,71 @@ public class FieldService {
         });
         return result[0];
     }
+    public String updateCustomizedParameters(FieldDTO input){
+        try {
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+            databaseReference.child("user/" + input.getFieldName() + "/customizedParameters").setValue(input.getCustomizedParameters(), new DatabaseReference.CompletionListener() {
+                @Override
+                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                    if (databaseError != null) {
+                        System.out.println("Data could not be saved: " + databaseError.getMessage());
+                    } else {
+                        System.out.println("Data saved successfully.");
+                    }
+                }
+            });
+            return "OK";
+        } catch (Exception e) {
+            return e.toString();
+        }
+    }
+    public String setIrrigation(String input){
+        try {
+            JSONObject jsonData = new JSONObject(input);
+            String nameField = jsonData.optString("fieldName");
+            String time = jsonData.optString("time");
+
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy");
+            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+            LocalDateTime dateTime = LocalDateTime.parse(time, inputFormatter);
+
+            String dateSetIrr = dateTime.format(outputFormatter);
+
+            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+            String formattedDate1 = dateTime.format(formatter1);
+            Double amount = jsonData.optDouble("amount", 0);
+            String user = jsonData.optString("userName");
+
+            IrrigationInformation  irrigationInformation = new IrrigationInformation(dateSetIrr, amount);
+            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+            databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
+                @Override
+                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                    if (databaseError != null) {
+                        System.out.println("Data could not be saved: " + databaseError.getMessage());
+                    } else {
+                        System.out.println("Data saved successfully.");
+                    }
+                }
+            });
+            HistoryIrrigation historyIrrigation = new HistoryIrrigation(formattedDate1, user, amount);
+
+            databaseReference.child("user/" + nameField + "/historyIrrigation/" + formattedDate1 ).setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
+                @Override
+                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                    if (databaseError != null) {
+                        System.out.println("Data could not be saved: " + databaseError.getMessage());
+                    } else {
+                        System.out.println("Data saved successfully.");
+                    }
+                }
+            });
+
+            return "OK";
+        } catch (Exception e) {
+            return e.toString();
+        }
+    }
+
 }

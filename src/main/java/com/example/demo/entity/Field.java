@@ -16,11 +16,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static java.lang.Math.*;
@@ -44,11 +42,11 @@ public class Field {
     public static double _thg = 0.02;
     public static double _rateFlow = 1.3;
     final int _iTime = 0;
-    final int _iDOY = 0;
-    final int _iRadiation = 4;
-    final int _iRain = 1;
-    final int _iRH = 5;
-    final int _iTemp = 3;
+    final int _iDOY = 1;
+    final int _iRadiation = 2;
+    final int _iRain = 3;
+    final int _iRH = 4;
+    final int _iTemp = 5;
     final int _iWind = 6;
     final int _iIrrigation = 8;
     public static List<List<Object>> _weatherData = new ArrayList<List<Object>>();
@@ -68,7 +66,7 @@ public class Field {
     double amountOfIrrigation;
     List<Double> yields;
     String checkYieldDate;
-    CustomizedParameters customizedParameters;
+    CustomizedParameters customized_parameters;
     MeasuredData measuredData;
     String startIrrigation;
     String endIrrigation;
@@ -84,7 +82,7 @@ public class Field {
             double amountOfIrrigation,
             List<Double> yields,
             String checkYieldDate,
-            CustomizedParameters customizedParameters,
+            CustomizedParameters customized_parameters,
             MeasuredData measuredData,
             String startIrrigation,
             String endIrrigation) {
@@ -95,7 +93,7 @@ public class Field {
         this.amountOfIrrigation = amountOfIrrigation;
         this.yields = yields;
         this.checkYieldDate = checkYieldDate;
-        this.customizedParameters = customizedParameters;
+        this.customized_parameters = customized_parameters;
         this.measuredData = measuredData;
         this.startIrrigation = startIrrigation;
         this.endIrrigation = endIrrigation;
@@ -110,7 +108,7 @@ public class Field {
         this.yields = new ArrayList<>();
         this.yields.add(0.0);
         this.checkYieldDate = "";
-        this.customizedParameters = new CustomizedParameters(name);
+        this.customized_parameters = new CustomizedParameters(name);
         this.measuredData = new MeasuredData(name);
         this.startIrrigation = "";
         this.endIrrigation = "";
@@ -415,7 +413,6 @@ public class Field {
         // getWeatherDataFromDB();
         simulate();
         writeDataToCsvFile();
-
     }
 
     private void writeDataToCsvFile() {
@@ -559,14 +556,14 @@ public class Field {
         double radiation = Double.parseDouble(_weatherData.get(n).get(_iRadiation).toString());
         double relativeHumidity = Double.parseDouble(_weatherData.get(n).get(_iRH).toString());
         double wind = Double.parseDouble(_weatherData.get(n).get(_iWind).toString());
-        double latitude = Double.parseDouble(_weatherData.get(n).get(_iLat).toString());
-        double longitude = Double.parseDouble(_weatherData.get(n).get(_iLong).toString());
-        double elevation = Double.parseDouble(_weatherData.get(n).get(_iElev).toString());
-        double height = Double.parseDouble(_weatherData.get(n).get(_iHeight).toString());
-//        double latitude = 21.0075;
-//        double longitude =105.5416;
-//        double elevation = 16;
-//        double height = 2.5;
+//        double latitude = Double.parseDouble(_weatherData.get(n).get(_iLat).toString());
+//        double longitude = Double.parseDouble(_weatherData.get(n).get(_iLong).toString());
+//        double elevation = Double.parseDouble(_weatherData.get(n).get(_iElev).toString());
+//        double height = Double.parseDouble(_weatherData.get(n).get(_iHeight).toString());
+        double latitude = 21.0075;
+        double longitude =105.5416;
+        double elevation = 16;
+        double height = 2.5;
         double ppfd = radiation * 2.15; // 2.15 for conversion of energy to ppfd
 
         // double et0 = row.get(_iET0).doubleValue(); // this is not the reference ET, but already corrected we recalculate
@@ -580,6 +577,7 @@ public class Field {
         YR.add(et0);
         YR.add(irri);
         YR.add(dt);
+        YR.add(Double.valueOf(n));
 
         for (Double e : YR) {
             assert !Double.isNaN(e);
@@ -600,7 +598,7 @@ public class Field {
         _autoIrrigateTime = -1;
         double t = _iStart;
         List<Double> w = ode2initValues(); //initialize to start simulate
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i <= 8; i++) {
             List<Double> innerList = new ArrayList<>(Collections.nCopies(_printSize, 0.0));
             _results.add(innerList);
         }
@@ -637,6 +635,8 @@ public class Field {
             _results.get(4).set(i, 100.0 + 100.0 * w.get(8) / max(1.0, w.get(0) + w.get(1) + w.get(2) + w.get(3)));
             _results.get(5).set(i, w.get(9 + 5 * _nsl + 5));
             _results.get(6).set(i, w.get(9 + 3 * _nsl));
+            // Thêm thời gian
+            _results.get(8).set(i, t);
 
             int ri = 9 + 4 * _nsl;
             final double Nopt = 45 * w.get(0) + 2 * w.get(3) + 20 * w.get(1) + 20 * w.get(2);
@@ -805,18 +805,18 @@ public class Field {
         // water in soil
         //irrigation either not (rained), or from file, or auto.
         // file/auto should switch on current date?
-        double irrigation = this.customizedParameters.autoIrrigation ? wd.get(4) : 0.0;
+        double irrigation = this.customized_parameters.autoIrrigation ? wd.get(4) : 0.0;
 
 
-        double _fcThreshHold = this.customizedParameters.fieldCapacity;
+        double _fcThreshHold = this.customized_parameters.fieldCapacity;
         _fcThreshHold *= (_ths - _thr) / 100;
         _fcThreshHold += _thr;
         // cacular auto Irrigation Duration
-        double _autoIrrigationDuration = this.customizedParameters.irrigationDuration / 24;
+        double _autoIrrigationDuration = this.customized_parameters.irrigationDuration / 24;
         //convert from hour to day
-        double dhr = this.customizedParameters.dripRate;// l/hour
-        double dhd = this.customizedParameters.distanceBetweenHoles;//cm
-        double dld = this.customizedParameters.distanceBetweenRows;//cm
+        double dhr = this.customized_parameters.dripRate;// l/hour
+        double dhd = this.customized_parameters.distanceBetweenHoles;//cm
+        double dld = this.customized_parameters.distanceBetweenRows;//cm
         double _autoIrrigate = dhr * 24.0 / (dhd * dld / 10000.0);//m3/day
 
         // khi luong nuoc tuoi nho hon 1e-6
@@ -830,7 +830,7 @@ public class Field {
             irrigation += _autoIrrigate;
         }
 
-        double precipitation = this.customizedParameters.scaleRain / 100 * wd.get(0) + irrigation;
+        double precipitation = this.customized_parameters.scaleRain / 100 * wd.get(0) + irrigation;
 
         double ET0reference = wd.get(3);
         double ETrainFactor = (precipitation > 0) ? 1 : 0;
@@ -887,7 +887,7 @@ public class Field {
         List<Double> ncontrL = new ArrayList<>(Collections.nCopies(_nsl, 0.0));
         List<Double> _NminR_l = new ArrayList<>();
         for (int d = 0; d < _nsl; d++) {
-            double nminR = customizedParameters.fertilizationLevel / 100.0 *
+            double nminR = customized_parameters.fertilizationLevel / 100.0 *
                     36.0 / (_lvol * _BD) /
                     Math.pow(d + 1, 2);
             _NminR_l.add(nminR);
@@ -1035,7 +1035,7 @@ public class Field {
                 32450.201832919025, 23737.394350451857, 13397.630469881098, 3957.1453399169977, 0.20,
                 0.22, 0.24, 0.26, 0.28, 0.07542100264071419,
                 0.02307963368894293, 0.01472124807856798, 0.015408870976632799, 0.036662532373634316, 15489.303210521359,
-                8746.547767453529, 6735.208529755408, 3338.232961292761, 2809.7159558601656, 830.9333333333223,
+                8746.547767453529, 6735.208529755408, 3338.232961292761, 2809.7159558601656, 0.0,
                 1277.8853260140131, 1217.8080491816684, 402.2054320237714, 491.44313302137164, 2553.183241454802,
                 121399.92994271833
         };
