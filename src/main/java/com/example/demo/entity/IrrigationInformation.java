@@ -26,9 +26,10 @@ public class IrrigationInformation {
         this.time = time;
     }
 
-    public IrrigationInformation(String time, double amount) {
+    public IrrigationInformation(String time, double amount, double duration) {
         this.time = time;
         this.amount = amount;
+        this.duration = duration;
     }
 
     public double getAmount() {

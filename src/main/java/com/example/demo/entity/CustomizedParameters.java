@@ -5,16 +5,16 @@ import javax.annotation.Nullable;
 public class CustomizedParameters {
     @Nullable
     String fieldName;
-    double fieldCapacity;
-    boolean autoIrrigation;
-    double irrigationDuration;
-    double dripRate;
-    double distanceBetweenHoles;
-    double distanceBetweenRows;
-    double scaleRain;
-    double fertilizationLevel;
-    double acreage;
-    int numberOfHoles;
+    public double fieldCapacity;
+    public boolean autoIrrigation;
+    public double irrigationDuration;
+    public double dripRate;
+    public double distanceBetweenHole;
+    public double distanceBetweenRow;
+    public double scaleRain;
+    public double fertilizationLevel;
+    public double acreage;
+    public int numberOfHoles;
 
     @Nullable
     public String getFieldName() {
@@ -29,16 +29,16 @@ public class CustomizedParameters {
     }
     public CustomizedParameters(double acreage, double fieldCapacity,
                                 boolean autoIrrigation, double irrigationDuration,
-                                double dripRate, double distanceBetweenHoles,
-                                double distanceBetweenRows, double scaleRain,
+                                double dripRate, double distanceBetweenHole,
+                                double distanceBetweenRow, double scaleRain,
                                 double fertilizationLevel, int numberOfHoles) {
         this.acreage = acreage;
         this.fieldCapacity = fieldCapacity;
         this.autoIrrigation = autoIrrigation;
         this.irrigationDuration = irrigationDuration;
         this.dripRate = dripRate;
-        this.distanceBetweenHoles = distanceBetweenHoles;
-        this.distanceBetweenRows = distanceBetweenRows;
+        this.distanceBetweenHole = distanceBetweenHole;
+        this.distanceBetweenRow = distanceBetweenRow;
         this.scaleRain = scaleRain;
         this.fertilizationLevel = fertilizationLevel;
         this.numberOfHoles = numberOfHoles;
@@ -77,20 +77,20 @@ public class CustomizedParameters {
         this.dripRate = dripRate;
     }
 
-    public double getDistanceBetweenHoles() {
-        return distanceBetweenHoles;
+    public double getDistanceBetweenHole() {
+        return distanceBetweenHole;
     }
 
-    public void setDistanceBetweenHoles(double distanceBetweenHoles) {
-        this.distanceBetweenHoles = distanceBetweenHoles;
+    public void setDistanceBetweenHole(double distanceBetweenHole) {
+        this.distanceBetweenHole = distanceBetweenHole;
     }
 
-    public double getDistanceBetweenRows() {
-        return distanceBetweenRows;
+    public double getDistanceBetweenRow() {
+        return distanceBetweenRow;
     }
 
-    public void setDistanceBetweenRows(double distanceBetweenRows) {
-        this.distanceBetweenRows = distanceBetweenRows;
+    public void setDistanceBetweenRow(double distanceBetweenRow) {
+        this.distanceBetweenRow = distanceBetweenRow;
     }
 
     public double getScaleRain() {
@@ -128,9 +128,9 @@ public class CustomizedParameters {
     public CustomizedParameters(String name) {
         this.acreage = 50;
         this.fieldCapacity = 72;
-        this.distanceBetweenHoles = 30;
+        this.distanceBetweenHole = 30;
         this.irrigationDuration = 7;
-        this.distanceBetweenRows = 100;
+        this.distanceBetweenRow = 100;
         this.dripRate = 1.6;
         this.fertilizationLevel = 100;
         this.scaleRain = 100;
@@ -141,9 +141,9 @@ public class CustomizedParameters {
     public CustomizedParameters(CustomizedParameters customizedParameters) {
         this.acreage = customizedParameters.acreage;
         this.fieldCapacity = customizedParameters.fieldCapacity;
-        this.distanceBetweenHoles = customizedParameters.distanceBetweenHoles;
+        this.distanceBetweenHole = customizedParameters.distanceBetweenHole;
         this.irrigationDuration = customizedParameters.irrigationDuration;
-        this.distanceBetweenRows = customizedParameters.distanceBetweenRows;
+        this.distanceBetweenRow = customizedParameters.distanceBetweenRow;
         this.dripRate = customizedParameters.dripRate;
         this.fertilizationLevel = customizedParameters.fertilizationLevel;
         this.scaleRain = customizedParameters.scaleRain;

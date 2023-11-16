@@ -41,10 +41,10 @@ public class FieldRepository {
             fieldDTO.setFieldName(dataSnapshot.getKey());
             fieldDTO.setdAP(dataSnapshot.child("dAP").getValue(Integer.class));
             fieldDTO.setStartTime(dataSnapshot.child("startTime").getValue(String.class));
-            fieldDTO.setCustomizedParameters(dataSnapshot.child("customizedParameters").getValue(CustomizedParameters.class));
+            fieldDTO.setCustomized_parameters(dataSnapshot.child("customized_parameters").getValue(CustomizedParameters.class));
             fieldDTO.setStartIrrigation(dataSnapshot.child("startIrrigation").getValue(String.class));
             fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(Boolean.class));
-            fieldDTO.setIrrigationInformation(dataSnapshot.child("irrigationInformation").getValue(IrrigationInformation.class));
+            fieldDTO.setIrrigation_information(dataSnapshot.child("irrigation_information").getValue(IrrigationInformation.class));
             fieldDTO.setHistoryIrrigation(dataSnapshot.child("historyIrrigation").getValue(HistoryIrrigation.class));
             return fieldDTO;
         } catch (Exception e) {

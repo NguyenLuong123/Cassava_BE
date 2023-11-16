@@ -1,6 +1,8 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.FieldDTO;
+import com.example.demo.entity.HistoryIrrigation;
+import com.example.demo.entity.Humidity;
 import com.example.demo.entity.MeasuredData;
 import com.example.demo.service.FieldService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +43,19 @@ public class FieldController {
             throw new RuntimeException(e);
         }
     }
-    @PostMapping("/updateHistory")
-    public String updateHistory(@RequestBody String input) {
-        return fieldService.updateHistory(input);
-
+    @PostMapping("/updateHumidity")
+    public void updateHumidity() {
+        try {
+            fieldService.updateHumidity("Field1");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
+//    @PostMapping("/updateHistory")
+//    public String updateHistory(@RequestBody String input) {
+//        return fieldService.updateHistory(input);
+//
+//    }
 //    @PostMapping("/getWeatherData")
 //    public String getWeatherData(@RequestBody String input) {
 //        CompletableFuture<String> future = fieldService.getWeatherData(input);
@@ -77,6 +87,14 @@ public class FieldController {
     @PostMapping("/setIrrigation")
     public String setIrrigation(@RequestBody String input) {
         return fieldService.setIrrigation(input);
+    }
+    @PostMapping("/getHistoryIrrigation")
+    public CompletableFuture<List<HistoryIrrigation>> getHistoryIrrigation(@RequestBody String input) {
+        return fieldService.getHistoryIrrigation(input);
+    }
+    @PostMapping("/getHumidity")
+    public CompletableFuture<List<Humidity>> getHumidity(@RequestBody String input) {
+        return fieldService.getHumidity(input);
     }
 
 }

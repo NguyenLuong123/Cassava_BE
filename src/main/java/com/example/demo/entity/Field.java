@@ -10,10 +10,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -66,7 +63,16 @@ public class Field {
     double amountOfIrrigation;
     List<Double> yields;
     String checkYieldDate;
-    CustomizedParameters customized_parameters;
+
+    public void setCustomized_parameters(CustomizedParameters customized_parameters) {
+        this.customized_parameters = customized_parameters;
+    }
+
+    public CustomizedParameters getCustomized_parameters() {
+        return customized_parameters;
+    }
+
+    public CustomizedParameters customized_parameters;
     MeasuredData measuredData;
     String startIrrigation;
     String endIrrigation;
@@ -336,10 +342,9 @@ public class Field {
     public LocalDateTime getDay(double day) {
         return _getDay(day);
     }
-
-    public void loadAllWeatherDataFromCsvFile() throws IOException {
+    public void loadAllWeatherData() throws IOException {
         List<List<Object>> weatherData = new ArrayList<>();
-        String path = "H:\\demo1\\src\\main\\java\\com\\example\\demo\\data\\weatherData.average.allloc.csv";
+        String path = "H:\\demo1\\weatherDataVietNam.csv";
         File csvFile = new File(path);
 
         FileReader fileReader = new FileReader(csvFile);
@@ -352,9 +357,21 @@ public class Field {
             }
             weatherData.add(rowData);
         }
+//        _weatherData.get(1).add(Double.parseDouble( weatherData.get(2).get(1).toString()) - Double.parseDouble( weatherData.get(1).get(1).toString()));
+//        _weatherData.get(weatherData.size() - 1).add(Double.parseDouble( weatherData.get(weatherData.size() - 1).get(1).toString()) - Double.parseDouble( weatherData.get(weatherData.size() - 2).get(1).toString()));
+//        for (int i = 2; i < weatherData.size() - 3; i++) {
+//            _weatherData.get(i).add(Double.parseDouble( _weatherData.get(i + 1).get(1).toString()) - Double.parseDouble( _weatherData.get(i).get(1).toString()));
+//        }
+        _weatherData.add(weatherData.get(0));
+        _weatherData.add(weatherData.get(1));
+        for (int i = 1; i < weatherData.size() - 2; i++) {
+            if (Double.parseDouble( weatherData.get(i + 1).get(1).toString()) - Double.parseDouble(_weatherData.get(_weatherData.size() - 1).get(1).toString()) >= 0.01) {
+                _weatherData.add(weatherData.get(i));
+            }
+        }
+        System.out.println("");
 
-        _weatherData = weatherData;
-//        for (int i = 1; i <= _weatherData.size() - 1; i++) {
+        //        for (int i = 1; i <= _weatherData.size() - 1; i++) {
 //            String time = _weatherData.get(i).get(0).toString();
 //            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 //            Date date = new Date();
@@ -392,9 +409,39 @@ public class Field {
         }
     }
 
-    //Write resurlt in file CSV
-    private void writeToCsvFile() {
+    public void loadAllWeatherDataFromCsvFile() throws IOException {
+        List<List<Object>> weatherData = new ArrayList<>();
+        String path = "H:\\demo1\\src\\main\\java\\com\\example\\demo\\data\\weatherData.average.allloc.csv";
+        File csvFile = new File(path);
+
+        FileReader fileReader = new FileReader(csvFile);
+        CSVParser csvParser = new CSVParser(fileReader, CSVFormat.DEFAULT);
+
+        for (CSVRecord record : csvParser) {
+            List<Object> rowData = new ArrayList<>();
+            for (String value : record) {
+                rowData.add(value);
+            }
+            weatherData.add(rowData);
+        }
+
+        _weatherData = weatherData;
+//        for (int i = 1; i <= _weatherData.size() - 1; i++) {
+//            String time = _weatherData.get(i).get(0).toString();
+//            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            Date date = new Date();
+//            try {
+//                date = dateFormat.parse(time);
+//            } catch (ParseException e) {
+//                throw new RuntimeException(e);
+//            }
+//            double doy = getDoy(date);
+//            weatherData.get(i).set(1, doy);
+//        }
+        csvParser.close();
+        fileReader.close();
     }
+
 
     public void IrrigationCalculator(List<List<Double>> results) {
         this._results = results;
@@ -430,6 +477,44 @@ public class Field {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void writeDatatoCSV() throws IOException {
+        List<List<Object>> weatherData = new ArrayList<>();
+        String path = "C:\\Users\\Admin\\Downloads\\Field3.csv";
+        File csvFile = new File(path);
+
+        FileReader fileReader = new FileReader(csvFile);
+        CSVParser csvParser = new CSVParser(fileReader, CSVFormat.DEFAULT);
+
+        for (CSVRecord record : csvParser) {
+            List<Object> rowData = new ArrayList<>();
+            for (String value : record) {
+                rowData.add(value);
+            }
+            weatherData.add(rowData);
+        }
+        String csvFilePath = "doam.csv";
+        try {
+            FileWriter writer = new FileWriter(csvFilePath);
+            CSVWriter csvWriter = new CSVWriter(writer);
+            List<String[]> data = new ArrayList<>();
+
+            for (int i = 2; i < weatherData.size() - 1; i++) {
+                String[] arrayData = weatherData.get(i).get(0).toString().split(";");
+                data.add(arrayData);
+            }
+            for (int i = 0; i < data.size() - 1; i++){
+                data.get(i)[0] = data.get(i)[1];
+            }
+            csvWriter.writeAll(data);
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        _weatherData = weatherData;
+        csvParser.close();
+        fileReader.close();
     }
 
     // calulator models của mình
@@ -598,15 +683,15 @@ public class Field {
         _autoIrrigateTime = -1;
         double t = _iStart;
         List<Double> w = ode2initValues(); //initialize to start simulate
-        for (int i = 0; i <= 8; i++) {
-            List<Double> innerList = new ArrayList<>(Collections.nCopies(_printSize, 0.0));
-            _results.add(innerList);
-        }
         double dt = (double) 30 / (60 * 24);
         int ps = min(_printSize, (int) ceil((_iend - _iStart) / pdt));
         List<Double> ptime = new ArrayList<>();
         for (int index = 0; index < ps; ++index) {
             ptime.add(_iStart + (double) index * pdt);
+        }
+        for (int i = 0; i <= 8; i++) {
+            List<Double> innerList = new ArrayList<>(Collections.nCopies(ptime.size(), 0.0));
+            _results.add(innerList);
         }
         t = _iStart;
         for (int i = 0; i < ptime.size(); ++i) {
@@ -646,62 +731,6 @@ public class Field {
                     .orElse(0.0) / Math.max(1.0, Nopt)); //nupt
         }
         writeDataToCsvFile();
-
-//        int day = 0;
-//        for (int i = 2; i < _weatherData.size() - 1; i++) {
-//            //get weather data
-//            List<Double> wd = new ArrayList<>(); //weatherData
-//            double rain = Double.parseDouble( _weatherData.get(i).get(_iRain).toString());
-//            wd.add(rain); //wd[0]
-//            double tempC = Double.parseDouble(_weatherData.get(i).get(_iTemp).toString());
-//            wd.add(tempC); //wd[1]
-//            double radiation = Double.parseDouble(_weatherData.get(i).get(_iRadiation).toString());
-//            wd.add(2.5 * radiation); // ppfd = 2.5 * radiation, wd[2], photosynthetic photon flux density
-//            double relativeHumidity = Double.parseDouble(_weatherData.get(i).get(_iRH).toString());
-//            double wind = Double.parseDouble(_weatherData.get(i).get(_iWind).toString());
-//            double doy = Double.parseDouble(_weatherData.get(i).get(_iDOY).toString());
-//            double et0 = hourlyET(
-//                    tempC,
-//                    radiation,
-//                    relativeHumidity,
-//                    wind,
-//                    doy,
-//                    Constant.latitude,
-//                    Constant.longitude,
-//                    Constant.elevation,
-//                    Constant.longitude,
-//                    Constant.height);
-//            wd.add(et0); //wd[3]
-//
-//            wd.add(0.0); //for irrigation,wd[4]
-//            //khoảng cách thời gian giữa 2 thời gian
-//            double dt = Double.parseDouble(_weatherData.get(i).get(_iDOY).toString()) - Double.parseDouble(_weatherData.get(i - 1).get(_iDOY).toString());
-//            wd.add(dt);
-//
-//            //do step
-//            rk4Step(doy - _iStart, w, dt, wd);
-//
-//            //if the next time is in a next day
-//            if ((Math.floor(Double.parseDouble(_weatherData.get(i + 1).get(_iDOY).toString())) - Math.floor(doy)) > 0) {
-//                _results.get(0).add(w.get(3) * 10 / _APPi); //yield
-//                _results.get(1).add(w.get(9 + 2 * _nsl)); //theta
-//                _results.get(2).add(w.get(9 + 5 * _nsl)); //irrigation;
-//
-//                _results.get(3).add(w.get(4) / _APPi); //lai
-//                _results.get(4).add(100.0 + 100.0 * w.get(8) / Math.max(1.0, w.get(0) + w.get(1) + w.get(2) + w.get(3))); //clab
-//                _results.get(5).add(w.get(9 + 5 * _nsl + 5)); //photo
-//                _results.get(6).add(w.get(9 + 3 * _nsl)); //topsoil ncont
-//                int ri = 9 + 4 * _nsl;
-//                final double Nopt = 45 * w.get(0) + 2 * w.get(3) + 20 * w.get(1) + 20 * w.get(2);
-//                _results.get(7).add((w.subList(ri, ri + _nsl))
-//                        .stream()
-//                        .reduce((value, element) -> value + element)
-//                        .orElse(0.0) / Math.max(1.0, Nopt)); //nupt
-//                _results.get(8).add(doy); //doy
-//                day++;
-//            }
-
-        // }
     }
 
     public void rk4Step(double t, List<Double> y, double dt, List<Double> wd) {
@@ -815,8 +844,8 @@ public class Field {
         double _autoIrrigationDuration = this.customized_parameters.irrigationDuration / 24;
         //convert from hour to day
         double dhr = this.customized_parameters.dripRate;// l/hour
-        double dhd = this.customized_parameters.distanceBetweenHoles;//cm
-        double dld = this.customized_parameters.distanceBetweenRows;//cm
+        double dhd = this.customized_parameters.distanceBetweenHole;//cm
+        double dld = this.customized_parameters.distanceBetweenRow;//cm
         double _autoIrrigate = dhr * 24.0 / (dhd * dld / 10000.0);//m3/day
 
         // khi luong nuoc tuoi nho hon 1e-6
@@ -1125,14 +1154,6 @@ public class Field {
         }
     }
 
-//    double getDoy(LocalDateTime sd) {
-//        final LocalDateTime rsd = LocalDateTime.of(sd.getYear(), 1, 1, 0, 0);
-//        double doy = Duration.between(rsd, sd).toDays();
-//        doy += sd.getHour() / 24.0 +
-//                sd.getMinute() / (24.0 * 60.0) +
-//                sd.getSecond() / (24.0 * 60.0 * 60.0);
-//        return doy;
-//    }
 
     LocalDateTime _getDay(double day) {
         LocalDateTime r = LocalDateTime.now();
@@ -1140,10 +1161,4 @@ public class Field {
         r = rsd.plusDays((long) Math.ceil(day));
         return r;
     }
-
-//    int daysBetween(LocalDateTime from, LocalDateTime to) {
-//        from = LocalDateTime.of(from.getYear(), from.getMonthValue(), from.getDayOfMonth(), 0, 0);
-//        to = LocalDateTime.of(to.getYear(), to.getMonthValue(), to.getDayOfMonth(), 0, 0);
-//        return (int) Math.round(Duration.between(from, to).toHours() / 24.0);
-//    }
 }

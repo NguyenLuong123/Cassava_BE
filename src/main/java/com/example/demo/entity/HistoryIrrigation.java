@@ -4,11 +4,21 @@ public class HistoryIrrigation {
     String time;
     String userName;
     Double amount;
+    Double duration;
 
-    public HistoryIrrigation(String time, String userName, Double amount) {
+    public Double getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Double duration) {
+        this.duration = duration;
+    }
+
+    public HistoryIrrigation(String time, String userName, Double amount, Double duration) {
         this.time = time;
         this.userName = userName;
         this.amount = amount;
+        this.duration = duration;
     }
 
     public HistoryIrrigation() {

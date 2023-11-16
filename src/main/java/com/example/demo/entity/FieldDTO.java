@@ -1,9 +1,7 @@
 package com.example.demo.entity;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
 
 public class FieldDTO {
@@ -24,27 +22,9 @@ public class FieldDTO {
     IrrigationInformation irrigation_information;
     HistoryIrrigation historyIrrigation;
 
-
-    public IrrigationInformation getIrrigationInformation() {
-        return irrigation_information;
-    }
-
-    public void setIrrigationInformation(IrrigationInformation irrigation_information) {
-        this.irrigation_information = irrigation_information;
-    }
-
-    public HistoryIrrigation getHistoryIrrigation() {
-        return historyIrrigation;
-    }
-
-    public void setHistoryIrrigation(HistoryIrrigation historyIrrigation) {
-        this.historyIrrigation = historyIrrigation;
-    }
-
     public String getFieldName() {
         return fieldName;
     }
-
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
@@ -98,19 +78,19 @@ public class FieldDTO {
         this.checkYieldDate = checkYieldDate;
     }
 
-    public CustomizedParameters getCustomizedParameters() {
+    public CustomizedParameters getCustomized_parameters() {
         return customized_parameters;
     }
 
-    public void setCustomizedParameters(CustomizedParameters customized_parameters) {
+    public void setCustomized_parameters(CustomizedParameters customized_parameters) {
         this.customized_parameters = customized_parameters;
     }
 
-    public String getMeasuredData() {
+    public String getMeasured_data() {
         return measured_data;
     }
 
-    public void setMeasuredData(String measured_data) {
+    public void setMeasured_data(String measured_data) {
         this.measured_data = measured_data;
     }
 
@@ -138,33 +118,25 @@ public class FieldDTO {
         this._autoIrrigateTime = _autoIrrigateTime;
     }
 
+    public IrrigationInformation getIrrigation_information() {
+        return irrigation_information;
+    }
+
+    public void setIrrigation_information(IrrigationInformation irrigation_information) {
+        this.irrigation_information = irrigation_information;
+    }
+
     public FieldDTO() {
     }
 
-    public FieldDTO(
-            String fieldName,
-            String startTime,
-            int dAP,
-            boolean irrigationCheck,
-            double amountOfIrrigation,
-            List<Double> yields,
-            String checkYieldDate,
-            CustomizedParameters customized_parameters,
-            String measured_data,
-            String startIrrigation,
-            String endIrrigation) {
-        this.fieldName = fieldName;
-        this.startTime = startTime;
-        this.dAP = dAP;
-        this.irrigationCheck = irrigationCheck;
-        this.amountOfIrrigation = amountOfIrrigation;
-        this.yields = yields;
-        this.checkYieldDate = checkYieldDate;
-        this.customized_parameters = customized_parameters;
-        this.measured_data = measured_data;
-        this.startIrrigation = startIrrigation;
-        this.endIrrigation = endIrrigation;
+    public HistoryIrrigation getHistoryIrrigation() {
+        return historyIrrigation;
     }
+
+    public void setHistoryIrrigation(HistoryIrrigation historyIrrigation) {
+        this.historyIrrigation = historyIrrigation;
+    }
+
     public FieldDTO(String name) {
         LocalDateTime currentDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
@@ -179,16 +151,16 @@ public class FieldDTO {
         this.endIrrigation = "";
     }
 
-    public FieldDTO(FieldDTO fieldDTO){
-        this.startTime = fieldDTO.startTime;
-        this.dAP = fieldDTO.dAP;
-        this.irrigationCheck = fieldDTO.irrigationCheck;
-        this.amountOfIrrigation = fieldDTO.amountOfIrrigation;
-        this.measured_data = "";
-        this.checkYieldDate = "";
-        this.customized_parameters = new CustomizedParameters(fieldDTO.customized_parameters);
-        this.startIrrigation = "";
-        this.endIrrigation = "";
-    }
+//    public FieldDTO(FieldDTO fieldDTO){
+//        this.startTime = fieldDTO.startTime;
+//        this.dAP = fieldDTO.dAP;
+//        this.irrigationCheck = fieldDTO.irrigationCheck;
+//        this.amountOfIrrigation = fieldDTO.amountOfIrrigation;
+//        this.measured_data = "";
+//        this.checkYieldDate = "";
+//        this.customized_parameters = new CustomizedParameters(fieldDTO.customized_parameters);
+//        this.startIrrigation = "";
+//        this.endIrrigation = "";
+//    }
 
 }
