@@ -34,20 +34,5 @@ public class UserController {
             return new ResponseDTO(false, e.getMessage(), null);
         }
     }
-//
-//    @PutMapping("/products")
-//    public String updateProduct(@RequestBody Product product) throws ExecutionException, InterruptedException {
-//        return userService.updateProduct(product);
-//    }
-//
-//    @DeleteMapping("/products/{name}")
-//    public String deleteProduct(@PathVariable String name) throws ExecutionException, InterruptedException {
-//        return userService.deleteProduct(name);
-//    }
-//
-//    @GetMapping("/products")
-//    public List<Product> getAll() throws ExecutionException, InterruptedException {
-//        return userService.getProductDetails();
-//    }
 
 }

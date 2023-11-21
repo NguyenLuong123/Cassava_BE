@@ -115,7 +115,7 @@ public class FieldService {
             fieldDTO.setCustomized_parameters(dataSnapshot.child("customized_parameters").getValue(CustomizedParameters.class));
             fieldDTO.setStartIrrigation(dataSnapshot.child("startIrrigation").getValue(String.class));
             fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(Boolean.class));
-            fieldDTO.setIrrigation_information(dataSnapshot.child("irrigationInformation").getValue(IrrigationInformation.class));
+            fieldDTO.setIrrigation_information(dataSnapshot.child("irrigation_information").getValue(IrrigationInformation.class));
             fieldDTO.setHistoryIrrigation(dataSnapshot.child("historyIrrigation").getValue(HistoryIrrigation.class));
             return fieldDTO;
         } catch (Exception e) {
