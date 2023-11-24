@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.example.demo.service.FieldService.getWeatherData;
+
 @Repository
 public class FieldRepository {
     public CompletableFuture<String> getListField() {

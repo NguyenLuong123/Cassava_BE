@@ -163,7 +163,11 @@ public class FieldService {
                         measuredDataList.add(measuredData);
                     }
                 }
-                future.complete(measuredDataList);
+                if (dataSnapshot.getValue() == null) {
+                    future.complete(null);
+                } else {
+                    future.complete(measuredDataList);
+                }
             }
 
             @Override
@@ -356,6 +360,9 @@ public class FieldService {
         return CompletableFuture.allOf(measureDataListFuture, fieldDTOFuture)
                 .thenApply(ignored -> {
                     List<MeasuredData> measuredDataList = measureDataListFuture.join();
+                    if (measuredDataList == null || measuredDataList.size() == 0) {
+                        return "NODATA";
+                    }
                     Field field = new Field("nameField");
                     try {
                         field.setCustomized_parameters(fieldDTOFuture.get().getCustomized_parameters());
@@ -563,9 +570,12 @@ public class FieldService {
                         HistoryIrrigation historyIrrigation = child.getValue(HistoryIrrigation.class);
                         historyIrrigationList.add(historyIrrigation);
                 }
-                future.complete(historyIrrigationList);
+                if (dataSnapshot.getValue() == null) {
+                    future.complete(null);
+                } else {
+                    future.complete(historyIrrigationList);
+                }
             }
-
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 future.completeExceptionally(databaseError.toException());
@@ -586,7 +596,38 @@ public class FieldService {
                         humidityList.add(measuredData);
                     }
                 }
-                future.complete(humidityList);
+                if (dataSnapshot.getValue() == null) {
+                    future.complete(null);
+                } else {
+                    future.complete(humidityList);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+        return future;
+    }
+    public static CompletableFuture<Humidity> getHumidityRecentTime(String input) {
+        CompletableFuture<Humidity> future = new CompletableFuture<>();
+        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/humidity_minute");
+        dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Humidity> humidityList = new ArrayList<>();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+                    for (DataSnapshot child1 : child.getChildren()) {
+                        Humidity measuredData = child1.getValue(Humidity.class);
+                        humidityList.add(measuredData);
+                    }
+                }
+                if (dataSnapshot.getValue() == null) {
+                    future.complete(null);
+                } else {
+                    future.complete(humidityList.get(humidityList.size() - 1));
+                }
             }
 
             @Override

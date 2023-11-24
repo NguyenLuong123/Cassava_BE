@@ -96,5 +96,10 @@ public class FieldController {
     public CompletableFuture<List<Humidity>> getHumidity(@RequestBody String input) {
         return fieldService.getHumidity(input);
     }
+    @PostMapping("/getHumidityRecentTime")
+    public CompletableFuture<Humidity> getHumidityRecentTime(@RequestBody String input) {
+        return fieldService.getHumidityRecentTime(input);
+    }
+
 
 }
