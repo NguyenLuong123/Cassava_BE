@@ -20,10 +20,6 @@ import java.util.concurrent.ExecutionException;
 public class FieldController {
     @Autowired
     private FieldService fieldService;
-//    @PostMapping("/insertField")
-//    public String insertField(@RequestBody FielDTO field1) throws ExecutionException, InterruptedException {
-//        return fieldService.insertField(field1);
-//    }
 
     @PostMapping("/insertField")
     public String insertField(@RequestBody String field1) {
@@ -32,13 +28,20 @@ public class FieldController {
 
     @PostMapping("/getListField")
     public String getListField() {
-        CompletableFuture<String> future = fieldService.getListFieldNew();
-        return future.join();
+//         CompletableFuture<String> future = fieldService.getListFieldNew();
+//         return future.join();
+        return fieldService.getFieldsFromCache();
     }
+//    @PostMapping("/getUpdateListField")
+//    public String getUpdateListField() {
+//         CompletableFuture<String> future = fieldService.getListFieldNew();
+//         return future.join();
+//        // return fieldService.getFieldsFromCache();
+//    }
     @PostMapping("/updateWeatherData")
     public void updateWeatherData() {
         try {
-            fieldService.updateWeatherData("Field1");
+            fieldService.updateWeatherData("Field2");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -55,11 +58,6 @@ public class FieldController {
 //    public String updateHistory(@RequestBody String input) {
 //        return fieldService.updateHistory(input);
 //
-//    }
-//    @PostMapping("/getWeatherData")
-//    public String getWeatherData(@RequestBody String input) {
-//        CompletableFuture<String> future = fieldService.getWeatherData(input);
-//        return future.join();
 //    }
 
     // test trường hợp dùng repository

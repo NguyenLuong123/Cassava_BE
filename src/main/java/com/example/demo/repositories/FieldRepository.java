@@ -41,11 +41,11 @@ public class FieldRepository {
         try {
             FieldDTO fieldDTO = new FieldDTO();
             fieldDTO.setFieldName(dataSnapshot.getKey());
-            fieldDTO.setdAP(dataSnapshot.child("dAP").getValue(Integer.class));
+            // fieldDTO.setdAP(dataSnapshot.child("dAP").getValue(Integer.class));
             fieldDTO.setStartTime(dataSnapshot.child("startTime").getValue(String.class));
             fieldDTO.setCustomized_parameters(dataSnapshot.child("customized_parameters").getValue(CustomizedParameters.class));
             fieldDTO.setStartIrrigation(dataSnapshot.child("startIrrigation").getValue(String.class));
-            fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(Boolean.class));
+            fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(String.class));
             fieldDTO.setIrrigation_information(dataSnapshot.child("irrigation_information").getValue(IrrigationInformation.class));
             fieldDTO.setHistoryIrrigation(dataSnapshot.child("historyIrrigation").getValue(HistoryIrrigation.class));
             return fieldDTO;
@@ -62,7 +62,7 @@ public class FieldRepository {
         return json;
     }
 
-    public String caculateModel(String input) {
-        return "";
-    }
+//    public String caculateModel(String input) {
+//        return "";
+//    }
 }

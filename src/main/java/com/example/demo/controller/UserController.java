@@ -25,7 +25,7 @@ public class UserController {
             JSONObject jsonData = new JSONObject(input);
             String email = jsonData.optString("email");
             String password = jsonData.optString("password");
-            User user =  userService.getAcount(email);
+            User user =  userService.getAccountByName(email);
             if ( user != null && user.getPassword().equals(password)) {
                 return new ResponseDTO(true, "Đăng nhập thành công", user);
             } else

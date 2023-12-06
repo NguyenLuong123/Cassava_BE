@@ -11,11 +11,10 @@ public class CorsConfig {
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
-            @CrossOrigin(origins = "http://localhost:4200")
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/api/**")
-                        .allowedOrigins("http://localhost:4200") // Thay đổi thành origin của bạn
+                        .allowedOrigins("*") // Thay đổi thành origin của bạn
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
                         .allowedHeaders("*");
             }

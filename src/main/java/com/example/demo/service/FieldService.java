@@ -2,46 +2,114 @@ package com.example.demo.service;
 
 import com.example.demo.entity.*;
 import com.example.demo.repositories.FieldRepository;
+import com.example.demo.repositories.FirebaseRepository;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.*;
 import com.google.gson.Gson;
+import com.opencsv.CSVWriter;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.Year;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 @Service
 @EnableAsync
 public class FieldService {
-    private static final String COLLECTION_NAME = "fields";
     private static FieldRepository fieldRepository;
-    private DatabaseReference databaseReference;
-
+    private static FirebaseRepository firebaseRepository;
     @Autowired
-    public FieldService(FieldRepository fieldRepository) {
+    public FieldService(FieldRepository fieldRepository, FirebaseRepository firebaseRepository) {
         this.fieldRepository = fieldRepository;
+        this.firebaseRepository = firebaseRepository;
     }
 
+    public CompletableFuture<FieldDTO> getField(String nameField) {
+        CompletableFuture<FieldDTO> future = new CompletableFuture<>();
+        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + nameField);
+        dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                FieldDTO fieldDTO = mapField(dataSnapshot);
+                future.complete(fieldDTO);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+        return future;
+    }
+//    @Scheduled(fixedRate = 300000) // 300000 milliseconds = 5 minutes
+//    public void refreshFieldListInCache() {
+//        updateFieldListCache().join(); // Đợi cho đến khi hoàn thành
+//    }
+//
+//    @CachePut(value = "fieldListCache")
+//    public CompletableFuture<String> updateFieldListCache() {
+//        return getListField(); // Gọi phương thức đã tồn tại để lấy dữ liệu
+//    }
+//    @Cacheable(value = "fieldListCache")
+//    public CompletableFuture<String> getFieldListFromCache() {
+//        // Phương thức này sẽ chỉ được thực hiện nếu dữ liệu không có trong cache
+//        // Trong trường hợp này, chúng ta giả sử rằng nếu không có cache, phương thức sẽ trả về null
+//        return CompletableFuture.completedFuture(null);
+//    }
+
+    //    public String getListFieldCache() {
+//        return getFieldListFromCache().join();
+//    }
+    private static final Map<String, String> cache = new ConcurrentHashMap<>();
+
+    // Hàm cập nhật cache
+    @Scheduled(fixedRate = 300000) // 300000 ms = 5 minutes
+    public void updateCache() {
+        getListField().thenAccept(json -> cache.put("fields", json));
+    }
+
+    @Scheduled(fixedRate = 600000) // 300000 ms = 5 minutes
+    public void updateWeatherCache() {
+        getWeatherData("field1").thenAccept(json -> cache.put("weather", json.toString()));
+    }
+    // Hàm lấy dữ liệu từ cache
+    public static String getFieldsFromCache() {
+        // return cache.getOrDefault("fields", "[]");
+        String data = cache.get("fields");
+        // Nếu dữ liệu không có trong cache
+        if (data == null) {
+            // Tải dữ liệu từ nguồn chính
+            data = getListField().join();
+
+            // Cập nhật cache với dữ liệu mới
+            cache.put("fields", data);
+        }
+        return data;
+    }
     // oki
 //    public String insertField(FieldDTO fieldDTO) {
 //        FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -77,6 +145,7 @@ public class FieldService {
                 }
                 Gson gson = new Gson();
                 String json = gson.toJson(fieldList);
+                cache.put("fields", json);
                 future.complete(json);
             }
 
@@ -88,33 +157,16 @@ public class FieldService {
         return future;
     }
 
-    public static CompletableFuture<FieldDTO> getField(String nameField) {
-        CompletableFuture<FieldDTO> future = new CompletableFuture<>();
-        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + nameField);
-        dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                FieldDTO fieldDTO = mapField(dataSnapshot);
-                future.complete(fieldDTO);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                future.completeExceptionally(databaseError.toException());
-            }
-        });
-        return future;
-    }
 
     public static FieldDTO mapField(DataSnapshot dataSnapshot) {
         try {
             FieldDTO fieldDTO = new FieldDTO();
             fieldDTO.setFieldName(dataSnapshot.getKey());
-            fieldDTO.setdAP(dataSnapshot.child("dAP").getValue(Integer.class));
+            // fieldDTO.setdAP(dataSnapshot.child("dAP").getValue(Integer.class));
             fieldDTO.setStartTime(dataSnapshot.child("startTime").getValue(String.class));
             fieldDTO.setCustomized_parameters(dataSnapshot.child("customized_parameters").getValue(CustomizedParameters.class));
             fieldDTO.setStartIrrigation(dataSnapshot.child("startIrrigation").getValue(String.class));
-            fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(Boolean.class));
+            fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(String.class));
             fieldDTO.setIrrigation_information(dataSnapshot.child("irrigation_information").getValue(IrrigationInformation.class));
             fieldDTO.setHistoryIrrigation(dataSnapshot.child("historyIrrigation").getValue(HistoryIrrigation.class));
             return fieldDTO;
@@ -122,34 +174,9 @@ public class FieldService {
             return null;
         }
     }
-
-    //oki
-//    public String updateHistory(String input) {
-//        try {
-//            JSONObject jsonObject = new JSONObject(input);
-//            String fieldName = jsonObject.getString("fieldName");
-//            String userName = jsonObject.getString("userName");
-//            Double amount = jsonObject.getDouble("amount");
-//            String time = jsonObject.getString("time");
-//            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-//            HistoryIrrigation historyIrrigation = new HistoryIrrigation(time, userName, amount, du);
-//            // Sử dụng đối tượng DatabaseReference để cập nhật dữ liệu
-//            databaseReference.child("user/" + fieldName + "/historyIrrigation").setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
-//                @Override
-//                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-//                    if (databaseError != null) {
-//                        System.out.println("Data could not be saved: " + databaseError.getMessage());
-//                    } else {
-//                        System.out.println("Data saved successfully.");
-//                    }
-//                }
-//            });
-//            return "OK";
-//        } catch (Exception e) {
-//            return e.toString();
-//        }
-//    }
-
+    public String getData() {
+        return firebaseRepository.getData("user").join();
+    }
     public static CompletableFuture<List<MeasuredData>> getWeatherData(String input) {
         CompletableFuture<List<MeasuredData>> future = new CompletableFuture<>();
         DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/measured_data");
@@ -215,7 +242,7 @@ public class FieldService {
 
     public static void updateWeatherData(String name) throws IOException {
         List<List<Object>> weatherData = new ArrayList<>();
-        String path = "H:\\demo1\\irrigation_data1.csv";
+        String path = "H:\\demo1\\dataWeatherVietNam2.csv";
         File csvFile = new File(path);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
 
@@ -232,16 +259,16 @@ public class FieldService {
             weatherData.add(rowData);
         }
         int i = 0;
-        try{
+        try {
             List<MeasuredData> measuredDataList = new ArrayList<>();
             for (i = 3; i < weatherData.size(); i++) {
                 MeasuredData measuredData = new MeasuredData(name);
-                measuredData.setTime(weatherData.get(i).get(0).toString());
-                measuredData.setRadiation(Float.parseFloat(weatherData.get(i).get(2).toString()));
-                measuredData.setRainFall(Double.parseDouble(weatherData.get(i).get(3).toString()));
-                measuredData.setRelativeHumidity(Double.parseDouble(weatherData.get(i).get(4).toString()));
-                measuredData.setWindSpeed(Double.parseDouble(weatherData.get(i).get(6).toString()));
-                measuredData.setTemperature(Double.parseDouble(weatherData.get(i).get(5).toString()));
+                measuredData.setTime(weatherData.get(i).get(5).toString());
+                measuredData.setRadiation(Float.parseFloat(weatherData.get(i).get(4).toString()));
+                measuredData.setRainFall(Double.parseDouble(weatherData.get(i).get(0).toString()));
+                measuredData.setRelativeHumidity(Double.parseDouble(weatherData.get(i).get(1).toString()));
+                measuredData.setWindSpeed(Double.parseDouble(weatherData.get(i).get(3).toString()));
+                measuredData.setTemperature(Double.parseDouble(weatherData.get(i).get(2).toString()));
                 measuredDataList.add(measuredData);
                 try {
                     // Chuyển đổi chuỗi thời gian thành đối tượng Date
@@ -265,7 +292,7 @@ public class FieldService {
                     e.printStackTrace();
                 }
             }
-        } catch (Exception e ) {
+        } catch (Exception e) {
             System.out.println(weatherData.get(i).get(0));
         }
         csvParser.close();
@@ -291,10 +318,10 @@ public class FieldService {
             humidity.add(rowData);
         }
         int i = 0;
-        try{
+        try {
             List<Humidity> humidityList = new ArrayList<>();
             for (i = 0; i < humidity.size(); i++) {
-                Humidity humidity1 = new Humidity(humidity.get(i).get(2).toString(), humidity.get(i).get(3).toString(), humidity.get(i).get(1).toString());
+                Humidity humidity1 = new Humidity((Double) humidity.get(i).get(2), (Double) humidity.get(i).get(3), humidity.get(i).get(1).toString());
                 humidityList.add(humidity1);
                 try {
                     // Chuyển đổi chuỗi thời gian thành đối tượng Date
@@ -315,12 +342,13 @@ public class FieldService {
                     e.printStackTrace();
                 }
             }
-        } catch (Exception e ) {
+        } catch (Exception e) {
             System.out.println(humidity.get(i).get(0));
         }
         csvParser.close();
         fileReader.close();
     }
+
     // code new
     public static CompletableFuture<DataSnapshot> fetchData1(String path) {
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
@@ -354,96 +382,122 @@ public class FieldService {
     @Async
     @EventListener
     public CompletableFuture<String> calculateModel(String nameField) {
-        CompletableFuture<List<MeasuredData>> measureDataListFuture = getWeatherData(nameField);
         CompletableFuture<FieldDTO> fieldDTOFuture = getField(nameField);
-
-        return CompletableFuture.allOf(measureDataListFuture, fieldDTOFuture)
+        CompletableFuture<List<MeasuredData>> measureDataListFuture = getWeatherData(nameField);
+        return CompletableFuture.allOf(fieldDTOFuture, measureDataListFuture)
                 .thenApply(ignored -> {
-                    List<MeasuredData> measuredDataList = measureDataListFuture.join();
-                    if (measuredDataList == null || measuredDataList.size() == 0) {
-                        return "NODATA";
-                    }
-                    Field field = new Field("nameField");
                     try {
-                        field.setCustomized_parameters(fieldDTOFuture.get().getCustomized_parameters());
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    } catch (ExecutionException e) {
-                        throw new RuntimeException(e);
-                    }
-                    List<List<Object>> weatherData = new ArrayList<>();
-                    for (MeasuredData measuredData : measuredDataList) {
-                        String time = measuredData.getTime();
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                        Date date;
+                        double doyOfStartTime = 0.0;
+                        List<MeasuredData> measuredDataList = measureDataListFuture.join();
+                        if (measuredDataList == null || measuredDataList.size() == 0) {
+                            return "NODATA";
+                        }
+                        Field field = new Field("nameField");
+                        Date startTime;
+                        LocalDate localDateStart;
+                        int yearStart = 2023;
+                        double timeYear = 365;
                         try {
-                            date = dateFormat.parse(time);
-                        } catch (ParseException e) {
+                            field.setCustomized_parameters(fieldDTOFuture.get().getCustomized_parameters());
+                            String start = fieldDTOFuture.get().getStartTime();
+                            startTime = convertStringtoDate(start);
+                            localDateStart = startTime.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                            yearStart = localDateStart.getYear();
+                            timeYear = Year.isLeap(yearStart) ? 366.0 : 365.0;
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        } catch (ExecutionException e) {
                             throw new RuntimeException(e);
                         }
+                        List<List<Object>> weatherData = new ArrayList<>();
+                        for (MeasuredData measuredData : measuredDataList) {
+                            String time = measuredData.getTime();
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                            Date date;
+                            try {
+                                date = dateFormat.parse(time);
+                                // So sánh ngày bắt đầu trồng và ngày của dữ liệu thời tiết
+                                LocalDate localDate1 = date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+                                int yearWeather = localDate1.getYear();
 
-                        double doy = field.getDoy(date);
-                        double radiation = measuredData.getRadiation();
-                        double rain = measuredData.getRainFall();
-                        double relative = measuredData.getRelativeHumidity();
-                        double temperature = measuredData.getTemperature();
-                        double wind = measuredData.getWindSpeed();
+                                double doy = yearWeather == yearStart ? field.getDoy(date) : field.getDoy(date) + timeYear;
+                                double radiation = measuredData.getRadiation();
+                                double rain = measuredData.getRainFall();
+                                double relative = measuredData.getRelativeHumidity();
+                                double temperature = measuredData.getTemperature();
+                                double wind = measuredData.getWindSpeed();
 
-                        List<Object> result = new ArrayList<>();
-                        result.add(time);
-                        result.add(doy);
-                        result.add(radiation);
-                        result.add(rain);
-                        result.add(relative);
-                        result.add(temperature);
-                        result.add(wind);
+                                List<Object> result = new ArrayList<>();
+                                result.add(time);
+                                result.add(doy);
+                                result.add(radiation);
+                                result.add(rain);
+                                result.add(relative);
+                                result.add(temperature);
+                                result.add(wind);
 
-                        weatherData.add(result);
-                    }
-
-                    field._weatherData.add(weatherData.get(0));
-                    field._weatherData.add(weatherData.get(1));
-                    for (int i = 1; i < weatherData.size() - 2; i++) {
-                        if (Double.parseDouble( weatherData.get(i + 1).get(1).toString()) - Double.parseDouble(field._weatherData.get(field._weatherData.size() - 1).get(1).toString()) >= 0.01) {
-                            field._weatherData.add(weatherData.get(i));
-                        }
-                    }
-                    field.simulate();
-                    // cập nhật lượng nc tưới lên firebase
-                    int length = field._results.get(2).size();
-                    double irr = (length > 1)
-                            ? field._results.get(2).get(length - 1) - field._results.get(2).get(length - 2)
-                            : field._results.get(2).get(0);
-                    irr *= 0.1; // convert to l/m2
-                    double duration = irr *
-                            field.getCustomized_parameters().acreage /
-                            (field.getCustomized_parameters().dripRate *
-                                    field.getCustomized_parameters().numberOfHoles) *
-                            3600; // convert to seconds
-
-                    LocalDateTime day = getDay(field._results.get(8).get(length - 1));
-                    day = day.plusHours(8);
-                    LocalDateTime d = LocalDateTime.of(day.getYear(), day.getMonthValue(), day.getDayOfMonth(),
-                            8, day.getMinute(), day.getSecond());
-                    DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-                    String formattedDate = d.format(outputFormatter);
-                    IrrigationInformation  irrigationInformation = new IrrigationInformation(formattedDate, irr, duration);
-                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-                    databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
-                        @Override
-                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                            if (databaseError != null) {
-                                System.out.println("Data could not be saved: " + databaseError.getMessage());
-                            } else {
-                                System.out.println("Data saved successfully.");
+                                weatherData.add(result);
+                            } catch (ParseException e) {
+                                throw new RuntimeException(e);
                             }
                         }
-                    });
-                    Gson gson = new Gson();
-                    String json = gson.toJson(field._results);
-                    return json;
+                        List<List<Object>> weatherDataTemp = new ArrayList<>();
+                        weatherDataTemp.add(weatherData.get(0));
+
+                        for (int i = 0; i < weatherData.size() - 2; i++) {
+                            Double dt = Double.parseDouble(weatherData.get(i + 1).get(1).toString()) -
+                                    Double.parseDouble(weatherDataTemp.get(weatherDataTemp.size() - 1).get(1).toString());
+                            if ( dt >= 0.01) {
+                                weatherDataTemp.add(weatherData.get(i + 1));
+                            }
+                        }
+                        field._weatherData = new ArrayList<>();
+                        for (int i = 0; i < weatherDataTemp.size() - 1; i++) {
+                            if (Double.parseDouble(weatherDataTemp.get(i).get(1).toString()) >= 224) {
+                                field._weatherData.add(weatherDataTemp.get(i));
+                            }
+                        }
+                        field.simulate();
+
+                        // cập nhật lượng nc tưới lên firebase
+                        int length = field._results.get(2).size();
+                        double irr = (length > 1)
+                                ? field._results.get(2).get(length - 1) - field._results.get(2).get(length - 2)
+                                : field._results.get(2).get(0);
+                        irr *= 0.1; // convert to l/m2
+                        double duration = irr *
+                                field.getCustomized_parameters().acreage /
+                                (field.getCustomized_parameters().dripRate *
+                                        field.getCustomized_parameters().numberOfHoles) *
+                                3600; // convert to seconds
+
+                        LocalDateTime day = getDay(field._results.get(8).get(length - 1));
+                        day = day.plusHours(8);
+                        LocalDateTime d = LocalDateTime.of(day.getYear(), day.getMonthValue(), day.getDayOfMonth(),
+                                8, day.getMinute(), day.getSecond());
+                        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+                        String formattedDate = d.format(outputFormatter);
+//                    IrrigationInformation  irrigationInformation = new IrrigationInformation(formattedDate, irr, duration);
+//                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+//                    databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
+//                        @Override
+//                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+//                            if (databaseError != null) {
+//                                System.out.println("Data could not be saved: " + databaseError.getMessage());
+//                            } else {
+//                                System.out.println("Data saved successfully.");
+//                            }
+//                        }
+//                    });
+                        Gson gson = new Gson();
+                        String json = gson.toJson(field._results);
+                        return json;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                 });
     }
+
     public LocalDateTime getDay(double day) {
         LocalDateTime r = LocalDateTime.now();
         LocalDateTime rsd = LocalDateTime.of(r.getYear(), 1, 1, 0, 0);
@@ -475,7 +529,7 @@ public class FieldService {
         DatabaseReference ref = database.getReference("user");
         JSONObject jsonData = new JSONObject(input);
         String nameField = jsonData.optString("fieldName");
-        FieldDTO fieldDTO= new FieldDTO(nameField);
+        FieldDTO fieldDTO = new FieldDTO(nameField);
         final String[] result = {""};
         ref.child(nameField).setValue(fieldDTO, new DatabaseReference.CompletionListener() {
             @Override
@@ -486,12 +540,14 @@ public class FieldService {
                 } else {
                     // Ghi dữ liệu thành công
                     result[0] = "Data saved successfully.";
+                    updateCache();
                 }
             }
         });
         return result[0];
     }
-    public String updateCustomizedParameters(FieldDTO input){
+
+    public String updateCustomizedParameters(FieldDTO input) {
         try {
             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
             databaseReference.child("user/" + input.getFieldName() + "/customized_parameters").setValue(input.getCustomized_parameters(), new DatabaseReference.CompletionListener() {
@@ -509,7 +565,8 @@ public class FieldService {
             return e.toString();
         }
     }
-    public String setIrrigation(String input){
+
+    public String setIrrigation(String input) {
         try {
             JSONObject jsonData = new JSONObject(input);
             String nameField = jsonData.optString("fieldName");
@@ -520,7 +577,6 @@ public class FieldService {
             LocalDateTime dateTime = LocalDateTime.parse(time, inputFormatter);
 
             String dateSetIrr = dateTime.format(outputFormatter);
-
             DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
             String formattedDate1 = dateTime.format(formatter1);
@@ -528,7 +584,7 @@ public class FieldService {
             Double duration = jsonData.optDouble("duration", 0);
             String user = jsonData.optString("userName");
 
-            IrrigationInformation  irrigationInformation = new IrrigationInformation(dateSetIrr, amount, duration);
+            IrrigationInformation irrigationInformation = new IrrigationInformation(dateSetIrr, amount, duration);
             DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
             databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
                 @Override
@@ -542,7 +598,7 @@ public class FieldService {
             });
             HistoryIrrigation historyIrrigation = new HistoryIrrigation(formattedDate1, user, amount, duration);
 
-            databaseReference.child("user/" + nameField + "/historyIrrigation/" + formattedDate1 ).setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
+            databaseReference.child("user/" + nameField + "/historyIrrigation/" + formattedDate1).setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
                 @Override
                 public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                     if (databaseError != null) {
@@ -558,6 +614,7 @@ public class FieldService {
             return e.toString();
         }
     }
+
     public static CompletableFuture<List<HistoryIrrigation>> getHistoryIrrigation(String input) {
         CompletableFuture<List<HistoryIrrigation>> future = new CompletableFuture<>();
         DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/historyIrrigation");
@@ -567,8 +624,8 @@ public class FieldService {
                 List<HistoryIrrigation> historyIrrigationList = new ArrayList<>();
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
 
-                        HistoryIrrigation historyIrrigation = child.getValue(HistoryIrrigation.class);
-                        historyIrrigationList.add(historyIrrigation);
+                    HistoryIrrigation historyIrrigation = child.getValue(HistoryIrrigation.class);
+                    historyIrrigationList.add(historyIrrigation);
                 }
                 if (dataSnapshot.getValue() == null) {
                     future.complete(null);
@@ -576,6 +633,7 @@ public class FieldService {
                     future.complete(historyIrrigationList);
                 }
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 future.completeExceptionally(databaseError.toException());
@@ -583,6 +641,7 @@ public class FieldService {
         });
         return future;
     }
+
     public static CompletableFuture<List<Humidity>> getHumidity(String input) {
         CompletableFuture<List<Humidity>> future = new CompletableFuture<>();
         DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/humidity_minute");
@@ -610,6 +669,7 @@ public class FieldService {
         });
         return future;
     }
+
     public static CompletableFuture<Humidity> getHumidityRecentTime(String input) {
         CompletableFuture<Humidity> future = new CompletableFuture<>();
         DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/humidity_minute");
@@ -637,4 +697,35 @@ public class FieldService {
         });
         return future;
     }
+    private void writeDataToCsvFile(List<List<Object>> result, String namePath) {
+        String csvFilePath = namePath;
+        try {
+            FileWriter writer = new FileWriter(csvFilePath);
+            CSVWriter csvWriter = new CSVWriter(writer);
+            List<String[]> data = new ArrayList<>();
+            data.add(new String[]{"time", "doy", "rainFall", "relativeHumidity", "temperature", "windSpeed", "radiation"});
+            for (int i = 0; i < result.size(); i++) {
+                data.add(new String[]{"", "", "", "", "", "", "", "", ""});
+                for (int j = 0; j < result.get(0).size(); j++) {
+                    data.get(i + 1)[j] = result.get(i).get(j).toString();
+                }
+            }
+            csvWriter.writeAll(data);
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Date convertStringtoDate(String time) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date;
+        try {
+            date = dateFormat.parse(time);
+            return date;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

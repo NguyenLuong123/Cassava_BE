@@ -8,7 +8,7 @@ public class FieldDTO {
     String fieldName;
     int dAP;
     String startTime;
-    boolean irrigationCheck;
+    String irrigationCheck;
     double amountOfIrrigation;
 
     List<Double> yields;
@@ -46,11 +46,11 @@ public class FieldDTO {
         this.startTime = startTime;
     }
 
-    public boolean isIrrigationCheck() {
+    public String isIrrigationCheck() {
         return irrigationCheck;
     }
 
-    public void setIrrigationCheck(boolean irrigationCheck) {
+    public void setIrrigationCheck(String irrigationCheck) {
         this.irrigationCheck = irrigationCheck;
     }
 
@@ -142,7 +142,7 @@ public class FieldDTO {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
         this.startTime = currentDateTime.format(formatter);
         this.dAP = 0;
-        this.irrigationCheck = false;
+        this.irrigationCheck = "false";
         this.amountOfIrrigation = 0;
         this.measured_data = "";
         this.checkYieldDate = "";

@@ -1,6 +1,11 @@
 package com.example.demo.data;
 
 public class Constant {
+    public static final double latitude = 14.24; // vi do
+    public static final double longitude = 102.69; // kinh do
+    //14.24,102.69,295,2.5
+    public static final double elevation = 295; // do cao so voi muc nuoc bien
+    public static final double height = 2.5; // do cao
     public static final String USER = "user";
     public static final String TEST_USER = "testUser";
     public static final String CUSTOMIZED_PARAMETERS = "customized_parameters";
@@ -25,11 +30,6 @@ public class Constant {
     public static final String START_TIME = "startTime";
     public static final String FIELD_CAPACITY = "fieldCapacity";
     public static final String FIELD_CAPACITY_DISPLAY = "Field capacity to maintain (%)";
-    public static final double latitude = 14.24; // vi do
-    public static final double longitude = 102.69; // kinh do
-    //14.24,102.69,295,2.5
-    public static final double elevation = 295; // do cao so voi muc nuoc bien
-    public static final double height = 2.5; // do cao
     public static final int nSoilLayer = 5;
     public static final String ACREAGE = "acreage";
     public static final String IRRIGATION_DURATION = "irrigationDuration";

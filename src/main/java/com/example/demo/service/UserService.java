@@ -2,10 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.entity.User;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.firestore.DocumentReference;
-import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.WriteResult;
+import com.google.cloud.firestore.*;
 import com.google.firebase.cloud.FirestoreClient;
 import org.springframework.stereotype.Service;
 
@@ -19,26 +16,6 @@ public class UserService {
         ApiFuture<WriteResult> clWriteResultApiFuture = dbFirestore.collection(COLLECTION_NAME).document(user.getEmail()).set(user);
         return clWriteResultApiFuture.get().getUpdateTime().toString();
     }
-//    public String insert(Product product){
-//        FirebaseDatabase database = FirebaseDatabase.getInstance();
-//        DatabaseReference ref = database.getReference("user");
-//        final String[] result = {""};
-//        Product product1 = new Product();
-//        product1.setEmail(product.getEmail());
-//        ref.child(product.getUserName()).setValue(product1, new DatabaseReference.CompletionListener() {
-//            @Override
-//            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-//                if (databaseError != null) {
-//                    // Xử lý lỗi nếu có
-//                    result[0] = databaseError.getMessage();
-//                } else {
-//                    // Ghi dữ liệu thành công
-//                    result[0] = "Data saved successfully.";
-//                }
-//            }
-//        }); // Thay "key" và "value" bằng dữ liệu của bạn
-//        return result[0];
-//    }
     public User getAcount(String name) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
         DocumentReference documentReference = dbFirestore.collection(COLLECTION_NAME).document(name);
@@ -51,35 +28,24 @@ public class UserService {
         } else {
             return null;
         }
-
     }
-//
-//    public String updateProduct(Product product) throws ExecutionException, InterruptedException {
-//        Firestore dbFirestore = FirestoreClient.getFirestore();
-//        ApiFuture<WriteResult> clWriteResultApiFuture = dbFirestore.collection(COLLECTION_NAME).document(product.getName()).set(product);
-//        return clWriteResultApiFuture.get().getUpdateTime().toString();
-//    }
-//
-//    public String deleteProduct(String name) throws ExecutionException, InterruptedException {
-//        Firestore dbFirestore = FirestoreClient.getFirestore();
-//        ApiFuture<WriteResult> clWriteResultApiFuture = dbFirestore.collection(COLLECTION_NAME).document(name).delete();
-//        return "success";
-//    }
-//
-//    public List<Product> getProductDetails() throws ExecutionException, InterruptedException {
-//        Firestore dbFirestore = FirestoreClient.getFirestore();
-//        Iterable<DocumentReference> documentReferences = dbFirestore.collection(COLLECTION_NAME).listDocuments();
-//        Iterator<DocumentReference> iterator = documentReferences.iterator();
-//        List<Product> productList = new ArrayList<>();
-//        Product product = null;
-//        while (iterator.hasNext()) {
-//            DocumentReference documentReference1 = iterator.next();
-//            ApiFuture<DocumentSnapshot> future = documentReference1.get();
-//            DocumentSnapshot document = future.get();
-//            product = document.toObject(Product.class);
-//            productList.add(product);
-//        }
-//        return productList;
-//    }
+    public User getAccountByName(String name) {
+        Firestore dbFirestore = FirestoreClient.getFirestore();
+        CollectionReference collectionReference = dbFirestore.collection(COLLECTION_NAME);
+        Query query = collectionReference.whereEqualTo("email", name).limit(1);
+
+        try {
+            QuerySnapshot querySnapshot = query.get().get();
+            if (!querySnapshot.isEmpty()) {
+                DocumentSnapshot documentSnapshot = querySnapshot.getDocuments().get(0);
+                User user = documentSnapshot.toObject(User.class);
+                return user;
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace(); // Xem xét log để kiểm tra lỗi cụ thể
+        }
+
+        return null;
+    }
 
 }
