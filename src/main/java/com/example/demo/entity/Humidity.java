@@ -1,32 +1,32 @@
 package com.example.demo.entity;
 
 public class Humidity {
-    Double humidity30;
-    Double humidity60;
+    String humidity30;
+    String humidity60;
     String time;
 
-    public Double getHumidity30() {
+    public String getHumidity30() {
         return humidity30;
     }
 
     public Humidity() {
     }
 
-    public Humidity(Double humidity30, Double humidity60, String time) {
+    public Humidity(String humidity30, String humidity60, String time) {
         this.humidity30 = humidity30;
         this.humidity60 = humidity60;
         this.time = time;
     }
 
-    public void setHumidity30(Double humidity30) {
+    public void setHumidity30(String humidity30) {
         this.humidity30 = humidity30;
     }
 
-    public Double getHumidity60() {
+    public String getHumidity60() {
         return humidity60;
     }
 
-    public void setHumidity60(Double humidity60) {
+    public void setHumidity60(String humidity60) {
         this.humidity60 = humidity60;
     }
 

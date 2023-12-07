@@ -20,7 +20,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseDTO login(@RequestBody String input) throws ExecutionException, InterruptedException {
+    public ResponseDTO login(@RequestBody String input) {
         try {
             JSONObject jsonData = new JSONObject(input);
             String email = jsonData.optString("email");

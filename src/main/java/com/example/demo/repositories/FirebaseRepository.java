@@ -1,32 +1,25 @@
 package com.example.demo.repositories;
 
-import com.example.demo.entity.FieldDTO;
 import com.google.firebase.database.*;
 import org.springframework.stereotype.Repository;
 
-import java.util.concurrent.CompletableFuture;
 
 @Repository
 public class FirebaseRepository {
-    private DatabaseReference databaseReference;
+    private DatabaseReference database;
     public FirebaseRepository() {
+        // Không khởi tạo database ở đây
     }
 
-    public CompletableFuture<String> getData(String path) {
-        CompletableFuture<String> future = new CompletableFuture<>();
-        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference(path);
-        dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                String value = dataSnapshot.getValue(String.class);
-                future.complete(value);
-            }
+    private DatabaseReference getDatabase() {
+        if (database == null) {
+            database = FirebaseDatabase.getInstance().getReference();
+        }
+        return database;
+    }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                future.completeExceptionally(databaseError.toException());
-            }
-        });
-        return future;
+    public void readData(String node, ValueEventListener listener) {
+        DatabaseReference nodeRef = getDatabase().child(node);
+        nodeRef.addValueEventListener(listener);
     }
 }

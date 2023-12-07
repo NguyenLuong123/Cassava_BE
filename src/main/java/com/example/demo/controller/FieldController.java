@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/api")
@@ -30,14 +29,15 @@ public class FieldController {
     public String getListField() {
 //         CompletableFuture<String> future = fieldService.getListFieldNew();
 //         return future.join();
-        return fieldService.getFieldsFromCache();
+        return fieldService.getFirebaseData();
     }
-//    @PostMapping("/getUpdateListField")
-//    public String getUpdateListField() {
-//         CompletableFuture<String> future = fieldService.getListFieldNew();
-//         return future.join();
-//        // return fieldService.getFieldsFromCache();
-//    }
+    @PostMapping("/getUpdateListField")
+    public String getUpdateListField() {
+        fieldService.updateFirebaseData();
+//         CompletableFuture<String> future = fieldService.getListField();
+         return fieldService.getFirebaseData();
+        // return fieldService.getFieldsFromCache();
+    }
     @PostMapping("/updateWeatherData")
     public void updateWeatherData() {
         try {
@@ -54,13 +54,7 @@ public class FieldController {
             throw new RuntimeException(e);
         }
     }
-//    @PostMapping("/updateHistory")
-//    public String updateHistory(@RequestBody String input) {
-//        return fieldService.updateHistory(input);
-//
-//    }
 
-    // test trường hợp dùng repository
     @PostMapping("/getModelField")
     public String getModelField() throws IOException {
         return fieldService.getModelField();
@@ -98,6 +92,4 @@ public class FieldController {
     public CompletableFuture<Humidity> getHumidityRecentTime(@RequestBody String input) {
         return fieldService.getHumidityRecentTime(input);
     }
-
-
 }

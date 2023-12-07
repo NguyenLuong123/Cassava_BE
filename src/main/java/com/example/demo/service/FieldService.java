@@ -13,6 +13,9 @@ import org.apache.commons.csv.CSVRecord;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -42,11 +45,24 @@ import java.util.concurrent.ExecutionException;
 public class FieldService {
     private static FieldRepository fieldRepository;
     private static FirebaseRepository firebaseRepository;
+
     @Autowired
     public FieldService(FieldRepository fieldRepository, FirebaseRepository firebaseRepository) {
         this.fieldRepository = fieldRepository;
         this.firebaseRepository = firebaseRepository;
     }
+
+//    @Scheduled(cron = "0 29 22 * * ?")
+    // @Scheduled(fixedRate = 300000)// Chạy vào 8h mỗi ngày
+//    public void myScheduledMethod() {
+//        JSONArray jsonArray = new JSONArray(getFieldsFromCache());
+//        // Bây giờ bạn có thể làm việc với jsonArray
+//        // Ví dụ:
+//        for (int i = 0; i < jsonArray.length(); i++) {
+//            calculateModel(jsonArray.getJSONObject(i).getString("fieldName"));
+//        }
+//    }
+
 
     public CompletableFuture<FieldDTO> getField(String nameField) {
         CompletableFuture<FieldDTO> future = new CompletableFuture<>();
@@ -65,6 +81,7 @@ public class FieldService {
         });
         return future;
     }
+
 //    @Scheduled(fixedRate = 300000) // 300000 milliseconds = 5 minutes
 //    public void refreshFieldListInCache() {
 //        updateFieldListCache().join(); // Đợi cho đến khi hoàn thành
@@ -74,6 +91,7 @@ public class FieldService {
 //    public CompletableFuture<String> updateFieldListCache() {
 //        return getListField(); // Gọi phương thức đã tồn tại để lấy dữ liệu
 //    }
+
 //    @Cacheable(value = "fieldListCache")
 //    public CompletableFuture<String> getFieldListFromCache() {
 //        // Phương thức này sẽ chỉ được thực hiện nếu dữ liệu không có trong cache
@@ -81,56 +99,44 @@ public class FieldService {
 //        return CompletableFuture.completedFuture(null);
 //    }
 
-    //    public String getListFieldCache() {
+//    public String getListFieldCache() {
 //        return getFieldListFromCache().join();
 //    }
+
     private static final Map<String, String> cache = new ConcurrentHashMap<>();
 
     // Hàm cập nhật cache
-    @Scheduled(fixedRate = 300000) // 300000 ms = 5 minutes
-    public void updateCache() {
-        getListField().thenAccept(json -> cache.put("fields", json));
-    }
-
-    @Scheduled(fixedRate = 600000) // 300000 ms = 5 minutes
-    public void updateWeatherCache() {
-        getWeatherData("field1").thenAccept(json -> cache.put("weather", json.toString()));
-    }
-    // Hàm lấy dữ liệu từ cache
-    public static String getFieldsFromCache() {
-        // return cache.getOrDefault("fields", "[]");
-        String data = cache.get("fields");
-        // Nếu dữ liệu không có trong cache
-        if (data == null) {
-            // Tải dữ liệu từ nguồn chính
-            data = getListField().join();
-
-            // Cập nhật cache với dữ liệu mới
-            cache.put("fields", data);
-        }
-        return data;
-    }
-    // oki
-//    public String insertField(FieldDTO fieldDTO) {
-//        FirebaseDatabase database = FirebaseDatabase.getInstance();
-//        DatabaseReference ref = database.getReference("user");
-//        final String[] result = {""};
-//        FieldDTO fieldDTO1 = new FieldDTO(fieldDTO);
-//        ref.child(fieldDTO.getFieldName()).setValue(fieldDTO1, new DatabaseReference.CompletionListener() {
-//            @Override
-//            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-//                if (databaseError != null) {
-//                    // Xử lý lỗi nếu có
-//                    result[0] = "Data could not be saved. " + databaseError.getMessage();
-//                } else {
-//                    // Ghi dữ liệu thành công
-//                    result[0] = "Data saved successfully.";
-//                }
-//            }
-//        });
-//        return result[0];
+//    @Scheduled(fixedRate = 300000) // 300000 ms = 5 minutes
+//    public void updateCache() {
+//        getListField().thenAccept(json -> cache.put("fields", json));
+//    }
+//
+//    @Scheduled(fixedRate = 600000) // 300000 ms = 5 minutes
+//    public void updateWeatherCache() {
+//        getWeatherData("field1").thenAccept(json -> cache.put("weather", json.toString()));
 //    }
 
+    // Hàm lấy dữ liệu từ cache
+//    public static String getFieldsFromCache() {
+//        String data = cache.get("fields");
+//        // Nếu dữ liệu không có trong cache
+//        if (data == null) {
+//            // Tải dữ liệu từ nguồn chính
+//            data = getListField().join();
+//
+//            // Cập nhật cache với dữ liệu mới
+//            cache.put("fields", data);
+//        }
+//        return data;
+//    }
+
+    @Cacheable("fields")
+    public String getFirebaseData() {
+        return getListField().join();
+    }
+    @CacheEvict("fields")
+    public void updateFirebaseData() {
+    }
     // oki
     public static CompletableFuture<String> getListField() {
         CompletableFuture<String> future = new CompletableFuture<>();
@@ -174,9 +180,7 @@ public class FieldService {
             return null;
         }
     }
-    public String getData() {
-        return firebaseRepository.getData("user").join();
-    }
+
     public static CompletableFuture<List<MeasuredData>> getWeatherData(String input) {
         CompletableFuture<List<MeasuredData>> future = new CompletableFuture<>();
         DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + input + "/measured_data");
@@ -242,7 +246,7 @@ public class FieldService {
 
     public static void updateWeatherData(String name) throws IOException {
         List<List<Object>> weatherData = new ArrayList<>();
-        String path = "H:\\demo1\\dataWeatherVietNam2.csv";
+        String path = "H:\\demo1\\src\\main\\java\\com\\example\\demo\\data\\weatherData.average.allloc.csv";
         File csvFile = new File(path);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
 
@@ -321,7 +325,7 @@ public class FieldService {
         try {
             List<Humidity> humidityList = new ArrayList<>();
             for (i = 0; i < humidity.size(); i++) {
-                Humidity humidity1 = new Humidity((Double) humidity.get(i).get(2), (Double) humidity.get(i).get(3), humidity.get(i).get(1).toString());
+                Humidity humidity1 = new Humidity((String) humidity.get(i).get(2), (String) humidity.get(i).get(3), humidity.get(i).get(1).toString());
                 humidityList.add(humidity1);
                 try {
                     // Chuyển đổi chuỗi thời gian thành đối tượng Date
@@ -347,26 +351,6 @@ public class FieldService {
         }
         csvParser.close();
         fileReader.close();
-    }
-
-    // code new
-    public static CompletableFuture<DataSnapshot> fetchData1(String path) {
-        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference dataRef = databaseReference.child(path);
-        CompletableFuture<DataSnapshot> future = new CompletableFuture<>();
-
-        dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                future.complete(dataSnapshot);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                future.completeExceptionally(databaseError.toException());
-            }
-        });
-        return future;
     }
 
     // Thêm test thử trường hợp dùng repository
@@ -447,7 +431,7 @@ public class FieldService {
                         for (int i = 0; i < weatherData.size() - 2; i++) {
                             Double dt = Double.parseDouble(weatherData.get(i + 1).get(1).toString()) -
                                     Double.parseDouble(weatherDataTemp.get(weatherDataTemp.size() - 1).get(1).toString());
-                            if ( dt >= 0.01) {
+                            if (dt >= 0.01) {
                                 weatherDataTemp.add(weatherData.get(i + 1));
                             }
                         }
@@ -477,18 +461,35 @@ public class FieldService {
                                 8, day.getMinute(), day.getSecond());
                         DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
                         String formattedDate = d.format(outputFormatter);
-//                    IrrigationInformation  irrigationInformation = new IrrigationInformation(formattedDate, irr, duration);
-//                    DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-//                    databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
-//                        @Override
-//                        public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-//                            if (databaseError != null) {
-//                                System.out.println("Data could not be saved: " + databaseError.getMessage());
-//                            } else {
-//                                System.out.println("Data saved successfully.");
-//                            }
-//                        }
-//                    });
+                        IrrigationInformation irrigationInformation = new IrrigationInformation(formattedDate, irr, duration);
+
+                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+                        databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
+                            @Override
+                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                if (databaseError != null) {
+                                    System.out.println("Data could not be saved: " + databaseError.getMessage());
+                                } else {
+                                    System.out.println("Data saved successfully.");
+                                }
+                            }
+                        });
+                        if (irr > 0) {
+                            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                            String formattedDate1 = d.format(formatter1);
+                            HistoryIrrigation historyIrrigation = new HistoryIrrigation(d.format(formatter1), "admin", irr, duration);
+                            databaseReference.child("user/" + nameField + "/historyIrrigation/" + formattedDate1).setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
+                                @Override
+                                public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                    if (databaseError != null) {
+                                        System.out.println("Data could not be saved: " + databaseError.getMessage());
+                                    } else {
+                                        System.out.println("Data saved successfully.");
+                                    }
+                                }
+                            });
+                        }
                         Gson gson = new Gson();
                         String json = gson.toJson(field._results);
                         return json;
@@ -509,6 +510,7 @@ public class FieldService {
     }
 
     //Xóa một cánh đồng
+    @CacheEvict("fields")
     public void deleteField(String field) {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference("user");
         database.child(field).removeValue(new DatabaseReference.CompletionListener() {
@@ -537,10 +539,11 @@ public class FieldService {
                 if (databaseError != null) {
                     // Xử lý lỗi nếu có
                     result[0] = "Data could not be saved. " + databaseError.getMessage();
+                    updateFirebaseData();
                 } else {
                     // Ghi dữ liệu thành công
                     result[0] = "Data saved successfully.";
-                    updateCache();
+                   // updateCache();
                 }
             }
         });
@@ -697,6 +700,7 @@ public class FieldService {
         });
         return future;
     }
+
     private void writeDataToCsvFile(List<List<Object>> result, String namePath) {
         String csvFilePath = namePath;
         try {
