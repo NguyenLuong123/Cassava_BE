@@ -52,16 +52,13 @@ public class FieldService {
         this.firebaseRepository = firebaseRepository;
     }
 
-//    @Scheduled(cron = "0 29 22 * * ?")
-    // @Scheduled(fixedRate = 300000)// Chạy vào 8h mỗi ngày
-//    public void myScheduledMethod() {
-//        JSONArray jsonArray = new JSONArray(getFieldsFromCache());
-//        // Bây giờ bạn có thể làm việc với jsonArray
-//        // Ví dụ:
-//        for (int i = 0; i < jsonArray.length(); i++) {
-//            calculateModel(jsonArray.getJSONObject(i).getString("fieldName"));
-//        }
-//    }
+    @Scheduled(cron = "0 30 7 * * ?")
+    public void myScheduledMethod() {
+        JSONArray jsonArray = new JSONArray(getFirebaseData());
+        for (int i = 0; i < jsonArray.length(); i++) {
+            calculateModel(jsonArray.getJSONObject(i).getString("fieldName"));
+        }
+    }
 
 
     public CompletableFuture<FieldDTO> getField(String nameField) {
@@ -325,7 +322,7 @@ public class FieldService {
         try {
             List<Humidity> humidityList = new ArrayList<>();
             for (i = 0; i < humidity.size(); i++) {
-                Humidity humidity1 = new Humidity((String) humidity.get(i).get(2), (String) humidity.get(i).get(3), humidity.get(i).get(1).toString());
+                Humidity humidity1 = new Humidity((Double) humidity.get(i).get(2), (Double) humidity.get(i).get(3), humidity.get(i).get(1).toString());
                 humidityList.add(humidity1);
                 try {
                     // Chuyển đổi chuỗi thời gian thành đối tượng Date
@@ -443,43 +440,30 @@ public class FieldService {
                         }
                         field.simulate();
 
-                        // cập nhật lượng nc tưới lên firebase
-                        int length = field._results.get(2).size();
-                        double irr = (length > 1)
-                                ? field._results.get(2).get(length - 1) - field._results.get(2).get(length - 2)
-                                : field._results.get(2).get(0);
-                        irr *= 0.1; // convert to l/m2
-                        double duration = irr *
-                                field.getCustomized_parameters().acreage /
-                                (field.getCustomized_parameters().dripRate *
-                                        field.getCustomized_parameters().numberOfHoles) *
-                                3600; // convert to seconds
+                        // cập nhật lượng nc tưới lên firebase đối với những cánh đồng tưới tự động
+                        if (field.getCustomized_parameters().autoIrrigation) {
+                            int length = field._results.get(2).size();
+                            double irr = (length > 1)
+                                    ? field._results.get(2).get(length - 1) - field._results.get(2).get(length - 2)
+                                    : field._results.get(2).get(0);
+                            irr *= 0.1; // convert to l/m2
+                            double duration = irr *
+                                    field.getCustomized_parameters().acreage /
+                                    (field.getCustomized_parameters().dripRate *
+                                            field.getCustomized_parameters().numberOfHoles) *
+                                    3600; // convert to seconds
 
-                        LocalDateTime day = getDay(field._results.get(8).get(length - 1));
-                        day = day.plusHours(8);
-                        LocalDateTime d = LocalDateTime.of(day.getYear(), day.getMonthValue(), day.getDayOfMonth(),
-                                8, day.getMinute(), day.getSecond());
-                        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-                        String formattedDate = d.format(outputFormatter);
-                        IrrigationInformation irrigationInformation = new IrrigationInformation(formattedDate, irr, duration);
+                            LocalDateTime day = getDay(field._results.get(8).get(length - 1));
+                            day = day.plusHours(8);
+                            // set thời gian tưới là 8h
+                            LocalDateTime d = LocalDateTime.of(day.getYear(), day.getMonthValue(), day.getDayOfMonth(),
+                                    8, day.getMinute(), day.getSecond());
+                            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+                            String formattedDate = d.format(outputFormatter);
+                            IrrigationInformation irrigationInformation = new IrrigationInformation(formattedDate, irr, duration);
 
-                        DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
-                        databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
-                            @Override
-                            public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-                                if (databaseError != null) {
-                                    System.out.println("Data could not be saved: " + databaseError.getMessage());
-                                } else {
-                                    System.out.println("Data saved successfully.");
-                                }
-                            }
-                        });
-                        if (irr > 0) {
-                            DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-                            String formattedDate1 = d.format(formatter1);
-                            HistoryIrrigation historyIrrigation = new HistoryIrrigation(d.format(formatter1), "admin", irr, duration);
-                            databaseReference.child("user/" + nameField + "/historyIrrigation/" + formattedDate1).setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
+                            DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
+                            databaseReference.child("user/" + nameField + "/irrigation_information").setValue(irrigationInformation, new DatabaseReference.CompletionListener() {
                                 @Override
                                 public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
                                     if (databaseError != null) {
@@ -489,6 +473,22 @@ public class FieldService {
                                     }
                                 }
                             });
+                            if (irr > 0) {
+                                DateTimeFormatter formatter1 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                                String formattedDate1 = d.format(formatter1);
+                                HistoryIrrigation historyIrrigation = new HistoryIrrigation(d.format(formatter1), "admin", irr, duration);
+                                databaseReference.child("user/" + nameField + "/historyIrrigation/" + formattedDate1).setValue(historyIrrigation, new DatabaseReference.CompletionListener() {
+                                    @Override
+                                    public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+                                        if (databaseError != null) {
+                                            System.out.println("Data could not be saved: " + databaseError.getMessage());
+                                        } else {
+                                            System.out.println("Data saved successfully.");
+                                        }
+                                    }
+                                });
+                            }
                         }
                         Gson gson = new Gson();
                         String json = gson.toJson(field._results);

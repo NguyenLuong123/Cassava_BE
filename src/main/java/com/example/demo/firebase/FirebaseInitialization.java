@@ -24,7 +24,7 @@ public class FirebaseInitialization {
             // serviceAccount = new FileInputStream("./serviceAccountKey.json");
             FirebaseOptions options = new FirebaseOptions.Builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                    .setDatabaseUrl("https://testfield-db-default-rtdb.firebaseio.com")
+                    .setDatabaseUrl("https://directionproject-1e798-default-rtdb.firebaseio.com")
                     .build();
 
            return FirebaseApp.initializeApp(options);
