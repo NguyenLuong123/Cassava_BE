@@ -127,7 +127,7 @@ public class CustomizedParameters {
 
     public CustomizedParameters(String name) {
         this.acreage = 50;
-        this.fieldCapacity = 72;
+        this.fieldCapacity = 70;
         this.distanceBetweenHole = 30;
         this.irrigationDuration = 7;
         this.distanceBetweenRow = 100;

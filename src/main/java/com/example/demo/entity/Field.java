@@ -36,9 +36,9 @@ public class Field {
     final int _iTime = 0;
     final int _iDOY = 1;
     final int _iRadiation = 2;
-    final int _iRain = 3;
-    final int _iRH = 4;
-    final int _iTemp = 5;
+    final int _iRain = 4;
+    final int _iRH = 5;
+    final int _iTemp = 3;
     final int _iWind = 6;
     final int _iIrrigation = 8;
     public static List<List<Object>> _weatherData = new ArrayList<List<Object>>();
@@ -222,7 +222,7 @@ public class Field {
 
     public void loadAllWeatherDataFromCsvFile() throws IOException {
         List<List<Object>> weatherData = new ArrayList<>();
-        String path = "H:\\demo1\\dataWeatherVietNam.csv";
+        String path = "H:\\demo1\\src\\main\\java\\com\\example\\demo\\data\\dataTestAcess.csv";
         File csvFile = new File(path);
 
         FileReader fileReader = new FileReader(csvFile);
@@ -461,15 +461,11 @@ public class Field {
         // Update weather
 
         double dt = Double.parseDouble(_weatherData.get(n).get(_iDT).toString());
-        double rain = Double.parseDouble(_weatherData.get(n).get(_iRain).toString()) / dt; // mm to mm/day
+        double rain = Double.parseDouble(_weatherData.get(n).get(_iRain).toString())*24; // mm to mm/day
         double temp = Double.parseDouble(_weatherData.get(n).get(_iTemp).toString());
-        double radiation = 24 * Double.parseDouble(_weatherData.get(n).get(_iRadiation).toString());
+        double radiation = Double.parseDouble(_weatherData.get(n).get(_iRadiation).toString());
         double relativeHumidity = Double.parseDouble(_weatherData.get(n).get(_iRH).toString());
         double wind = Double.parseDouble(_weatherData.get(n).get(_iWind).toString());
-//        double latitude = Double.parseDouble(_weatherData.get(n).get(_iLat).toString());
-//        double longitude = Double.parseDouble(_weatherData.get(n).get(_iLong).toString());
-//        double elevation = Double.parseDouble(_weatherData.get(n).get(_iElev).toString());
-//        double height = Double.parseDouble(_weatherData.get(n).get(_iHeight).toString());
         double latitude = 21.0075;
         double longitude =105.5416;
         double elevation = 16;
@@ -477,7 +473,7 @@ public class Field {
         double ppfd = radiation * 2.15; // 2.15 for conversion of energy to ppfd
 
         // double et0 = row.get(_iET0).doubleValue(); // this is not the reference ET, but already corrected we recalculate
-        double et0 = hourlyET(temp, radiation, relativeHumidity, wind, doy, latitude, longitude, elevation, longitude, height);
+        double et0 = 24 * hourlyET(temp, radiation, relativeHumidity, wind, doy, latitude, longitude, elevation, longitude, height);
         double irri = 0; // TODO: Allow the farmer to enter // row.get(_iIrrigation).doubleValue();
 
         List<Double> YR = new ArrayList<>();
@@ -500,14 +496,16 @@ public class Field {
     int _printSize = 366;
     List<Double> _printTime = new ArrayList<>(Collections.nCopies(_printSize, -1000.0));
 
+    public void filterTime(int x) {
 
+    }
     public void simulate() {
         _iStart = Double.parseDouble(_weatherData.get(1).get(_iDOY).toString());
-        _iend = Double.parseDouble(_weatherData.get(_weatherData.size() - 1).get(_iDOY).toString());
+        _iend = Double.parseDouble(_weatherData.get(_weatherData.size() - 2).get(_iDOY).toString());
         _autoIrrigateTime = -1;
         double t = _iStart;
         List<Double> w = ode2initValues(); //initialize to start simulate
-        double dt = (double) 5 / (60 * 24);
+        double dt = (double) 60 / (60 * 24);
         int ps = min(_printSize, (int) ceil((_iend - _iStart) / pdt));
         List<Double> ptime = new ArrayList<>();
         for (int index = 0; index < ps; ++index) {
@@ -525,7 +523,7 @@ public class Field {
             while (t < ptime.get(i) - 0.5 * dt) {
                 double wddt = max(1e-10, min(min(dt, wd.get(5)), ptime.get(i) - t));
                 // Do step
-                rk4Step(t - 76 , w, wddt, wd);
+                rk4Step(t - 76, w, wddt, wd);
                 t += wddt;
 
                 // Next row in weather data

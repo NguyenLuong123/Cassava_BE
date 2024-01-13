@@ -3,7 +3,6 @@ package com.example.demo.service;
 import com.example.demo.entity.*;
 import com.example.demo.repositories.FieldRepository;
 import com.example.demo.repositories.FirebaseRepository;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.*;
 import com.google.gson.Gson;
 import com.opencsv.CSVWriter;
@@ -14,7 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -39,6 +37,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Service
 @EnableAsync
@@ -131,9 +130,11 @@ public class FieldService {
     public String getFirebaseData() {
         return getListField().join();
     }
+
     @CacheEvict("fields")
     public void updateFirebaseData() {
     }
+
     // oki
     public static CompletableFuture<String> getListField() {
         CompletableFuture<String> future = new CompletableFuture<>();
@@ -169,6 +170,7 @@ public class FieldService {
             fieldDTO.setStartTime(dataSnapshot.child("startTime").getValue(String.class));
             fieldDTO.setCustomized_parameters(dataSnapshot.child("customized_parameters").getValue(CustomizedParameters.class));
             fieldDTO.setStartIrrigation(dataSnapshot.child("startIrrigation").getValue(String.class));
+            fieldDTO.setEndIrrigation(dataSnapshot.child("endIrrigation").getValue(String.class));
             fieldDTO.setIrrigationCheck(dataSnapshot.child("irrigationCheck").getValue(String.class));
             fieldDTO.setIrrigation_information(dataSnapshot.child("irrigation_information").getValue(IrrigationInformation.class));
             fieldDTO.setHistoryIrrigation(dataSnapshot.child("historyIrrigation").getValue(HistoryIrrigation.class));
@@ -243,7 +245,7 @@ public class FieldService {
 
     public static void updateWeatherData(String name) throws IOException {
         List<List<Object>> weatherData = new ArrayList<>();
-        String path = "H:\\demo1\\src\\main\\java\\com\\example\\demo\\data\\weatherData.average.allloc.csv";
+        String path = "H:\\demo1\\dataWeatherVietNam2.csv";
         File csvFile = new File(path);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
 
@@ -499,6 +501,23 @@ public class FieldService {
                 });
     }
 
+    public String calculateCSV(List<WeatherRequest> nameField) throws IOException {
+        Field fieldTest = new Field("fieldTest");
+        List<List<Object>> twoDimensionalList = nameField.stream()
+                .map(item -> List.of(
+                        (Object)item.doy, (Object)item.rain, (Object)item.dt,
+                        (Object)item.temp, (Object)item.radiation, (Object)item.relativeHumidity,
+                        (Object)item.wind, (Object)item.lat, (Object)item.lon,
+                        (Object)item.elev, (Object)item.height, (Object)item.irr))
+                .collect(Collectors.toList());
+        fieldTest._weatherData = new ArrayList<>();
+        fieldTest._weatherData = twoDimensionalList;
+        fieldTest.runModel();
+        Gson gson = new Gson();
+        String json = gson.toJson(fieldTest._results);
+        return json;
+    }
+
     public LocalDateTime getDay(double day) {
         LocalDateTime r = LocalDateTime.now();
         LocalDateTime rsd = LocalDateTime.of(r.getYear(), 1, 1, 0, 0);
@@ -543,7 +562,7 @@ public class FieldService {
                 } else {
                     // Ghi dữ liệu thành công
                     result[0] = "Data saved successfully.";
-                   // updateCache();
+                    // updateCache();
                 }
             }
         });
@@ -719,6 +738,33 @@ public class FieldService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public CompletableFuture<List<Disease>> getDisease(String fieldName) {
+        CompletableFuture<List<Disease>> future = new CompletableFuture<>();
+        DatabaseReference dataRef = FirebaseDatabase.getInstance().getReference("user/" + fieldName + "/disease");
+        dataRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<Disease> historyIrrigationList = new ArrayList<>();
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
+
+                    Disease historyIrrigation = child.getValue(Disease.class);
+                    historyIrrigationList.add(historyIrrigation);
+                }
+                if (dataSnapshot.getValue() == null) {
+                    future.complete(null);
+                } else {
+                    future.complete(historyIrrigationList);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                future.completeExceptionally(databaseError.toException());
+            }
+        });
+        return future;
     }
 
     public Date convertStringtoDate(String time) {

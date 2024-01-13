@@ -8,6 +8,11 @@ public class FieldDTO {
     String fieldName;
     int dAP;
     String startTime;
+
+    public String getIrrigationCheck() {
+        return irrigationCheck;
+    }
+
     String irrigationCheck;
     double amountOfIrrigation;
 
