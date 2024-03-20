@@ -51,9 +51,9 @@ public class FieldDTO {
         this.startTime = startTime;
     }
 
-    public String isIrrigationCheck() {
-        return irrigationCheck;
-    }
+//    public String isIrrigationCheck() {
+//        return irrigationCheck;
+//    }
 
     public void setIrrigationCheck(String irrigationCheck) {
         this.irrigationCheck = irrigationCheck;

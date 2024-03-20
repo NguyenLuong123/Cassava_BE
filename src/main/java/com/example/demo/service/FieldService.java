@@ -517,7 +517,10 @@ public class FieldService {
         String json = gson.toJson(fieldTest._results);
         return json;
     }
+    public String calculateExcel() {
 
+        return "";
+    }
     public LocalDateTime getDay(double day) {
         LocalDateTime r = LocalDateTime.now();
         LocalDateTime rsd = LocalDateTime.of(r.getYear(), 1, 1, 0, 0);

@@ -63,8 +63,10 @@ public class FieldController {
     }
 
     @PostMapping("/calculateModel")
-    public CompletableFuture<String> caculateModel(@RequestBody String fieldName) {
-        return fieldService.calculateModel(fieldName);
+    public String caculateModel(@RequestBody String fieldName) throws IOException {
+
+        //return fieldService.calculateModel(fieldName);
+        return fieldService.getModelField();
     }
 
     @PostMapping("/getWeatherData")
@@ -112,11 +114,9 @@ public class FieldController {
         return fieldService.getField(fieldName);
     }
     @PostMapping("/calculateCSV")
-    public String calculateCSV(@RequestBody String weather) throws IOException {
+    public String calculateCSV(@RequestBody List<WeatherRequest> weather) throws IOException {
         // Sử dụng ObjectMapper để chuyển đổi chuỗi JSON thành danh sách 2 chiều
-        List<List<Object>> twoDimensionalList = convertJsonToList(weather);
-
-        return fieldService.calculateCSV(null);
+        return fieldService.calculateCSV(weather);
     }
     public static List<List<Object>> convertJsonToList(String jsonString) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -127,6 +127,11 @@ public class FieldController {
             e.printStackTrace();
             return null;
         }
+    }
+    @PostMapping("/calculateExcel")
+    public String calculateExcel() throws IOException {
+        // Sử dụng ObjectMapper để chuyển đổi chuỗi JSON thành danh sách 2 chiều
+        return fieldService.calculateExcel();
     }
 
 }

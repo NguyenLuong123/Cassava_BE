@@ -11,12 +11,6 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class UserService {
     private static final String COLLECTION_NAME = "users";
-    private final JwtService jwtService;
-
-    public UserService(JwtService jwtService) {
-        this.jwtService = jwtService;
-    }
-
     public String creatAcount(User user) throws ExecutionException, InterruptedException {
         Firestore dbFirestore = FirestoreClient.getFirestore();
         ApiFuture<WriteResult> clWriteResultApiFuture = dbFirestore.collection(COLLECTION_NAME).document(user.getEmail()).set(user);

@@ -9,6 +9,7 @@ import org.apache.commons.csv.CSVRecord;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 import static java.lang.Math.*;
@@ -236,7 +237,7 @@ public class Field {
             weatherData.add(rowData);
         }
 
-
+        // openweatherData
         for (int i = 0; i < weatherData.size() - 1; i++) {
             String time = weatherData.get(i).get(0).toString();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -278,10 +279,12 @@ public class Field {
     public void runModel() throws IOException {
         loadAllWeatherDataFromCsvFile();
         simulate();
-        writeDataToCsvFile();
+        writeDataCsvNew();
     }
+
     public void ode2InitModel(Double startTime, Double endTime) {
     }
+
     public List<Double> ode2initValuesTime0() {
         List<Double> yi = new ArrayList<>();
         for (int index = 0; index < 9 + _nsl * 5; ++index) {
@@ -326,18 +329,15 @@ public class Field {
         return yi;
     }
 
-    private void writeDataCsvFile(List<List<Double>> result) {
-        String csvFilePath = "resultVietNam.csv";
+    private void writeDataCsvNew() {
+        String csvFilePath = "resultWeatherThaiLan.csv";
         try {
             FileWriter writer = new FileWriter(csvFilePath);
             CSVWriter csvWriter = new CSVWriter(writer);
             List<String[]> data = new ArrayList<>();
-            // data.add(new String[]{"time", "doy", "rainFall", "relativeHumidity", "temperature", "windSpeed", "radiation"});
-            for (int i = 0; i < result.get(0).size(); i++) {
-                data.add(new String[]{"", "", "", "", "", "", "", "", "","", "",""});
-                for (int j = 0; j < result.size(); j++) {
-                    data.get(i)[j] = result.get(j).get(i).toString();
-                }
+            data.add(new String[]{"day", "Yeild", "irr", "LeafArea", "LabieCarbon"});
+            for (int i = 1; i < _results.get(0).size(); i++) {
+                data.add(new String[]{String.valueOf(LocalDate.ofYearDay(2023, (int) Math.ceil(_results.get(8).get(i)))), String.valueOf(_results.get(0).get(i)), String.valueOf(_results.get(2).get(i)), String.valueOf(_results.get(3).get(i)), String.valueOf(_results.get(4).get(i))});
             }
             csvWriter.writeAll(data);
             csvWriter.close();
@@ -345,6 +345,7 @@ public class Field {
             e.printStackTrace();
         }
     }
+
     private void writeDataToCsvFile() {
         String csvFilePath = "irrigation_data1.csv";
         try {
@@ -496,15 +497,22 @@ public class Field {
     int _printSize = 366;
     List<Double> _printTime = new ArrayList<>(Collections.nCopies(_printSize, -1000.0));
 
-    public void filterTime(int x) {
+//    public void setDonViThaiLan() {
+//        // Doy,Rain,dt,Temp,Radiation,Relative Humidity,Wind,lat,long,elev
+//        _iDOY = 0;
+//        _iRadiation = 4;
+//        _iRain = 1;
+//        _iRH = 5;
+//        _iTemp = 3;
+//        _iWind = 6;
+//    }
 
-    }
     public void simulate() {
         _iStart = Double.parseDouble(_weatherData.get(1).get(_iDOY).toString());
         _iend = Double.parseDouble(_weatherData.get(_weatherData.size() - 2).get(_iDOY).toString());
         _autoIrrigateTime = -1;
         double t = _iStart;
-        List<Double> w = ode2initValues(); //initialize to start simulate
+        List<Double> w = ode2initValuesTime0(); //initialize to start simulate
         double dt = (double) 60 / (60 * 24);
         int ps = min(_printSize, (int) ceil((_iend - _iStart) / pdt));
         List<Double> ptime = new ArrayList<>();
@@ -523,7 +531,7 @@ public class Field {
             while (t < ptime.get(i) - 0.5 * dt) {
                 double wddt = max(1e-10, min(min(dt, wd.get(5)), ptime.get(i) - t));
                 // Do step
-                rk4Step(t - 76, w, wddt, wd);
+                rk4Step(t - _iStart, w, wddt, wd);
                 t += wddt;
 
                 // Next row in weather data
@@ -884,7 +892,7 @@ public class Field {
                 2.4665560462821263, 91.79400000000325, 202.84134540781776, 277.46639346799145,
                 31.685022446633873, 246.0908445789579, 206.014020579492, 150.50254098663453,
                 84.81732279105968, 24.99698068055664, 14771.450674737114, 12376.546166518712,
-                9053.470870979236, 5109.872440430796, 1509.2600113651777,  0.2381801339197489,
+                9053.470870979236, 5109.872440430796, 1509.2600113651777, 0.2381801339197489,
                 0.23832060394348634, 0.2528704670241301, 0.27385732934211704, 0.2953060649096794,
                 0.5699703070593461, 0.45975876345694205, 3.0590914791309287, 1.0999841454865997,
                 6.4442547370882055, 7888.635585812703, 6728.453739220788, 5256.491465187306,
